@@ -56,7 +56,6 @@
             transform: scaleX(-1);
         }
 
-        /* Style สำหรับสั่งพิมพ์สลิป/การ์ดโค้ดสำหรับลูกค้า */
         @media print {
             body * {
                 visibility: hidden;
@@ -159,7 +158,6 @@
                             </button>
                         </div>
 
-                        <!-- เพิ่มปุ่มสุ่มโค้ด 10 โค้ด และ ปุ่มกดพิมพ์โค้ดให้ลูกค้า -->
                         <div class="grid grid-cols-2 gap-2 pt-1 pb-1">
                             <button onclick="generate10RandomSingleUseCoupons()" class="py-2 bg-indigo-500 hover:bg-indigo-600 text-white rounded-xl text-xs font-bold shadow-sm transition flex items-center justify-center gap-1">
                                 <i class="fa-solid fa-dice"></i> สุ่มโค้ด 10 โค้ด (ใช้ครั้งเดียว)
@@ -352,7 +350,7 @@
                 <div id="stepSection1" class="bg-white rounded-3xl p-5 border border-sky-100 pastel-shadow space-y-4">
                     <h2 class="text-sm font-bold text-slate-800 flex items-center gap-2 border-b border-sky-100 pb-2">
                         <i class="fa-solid fa-camera-retro text-sky-500"></i>
-ยินดีต้อนรับสู่ Photo Booth
+                        1. ยินดีต้อนรับสู่ Photo Booth
                     </h2>
                     <p class="text-xs text-slate-500 leading-relaxed">
                         ยินดีต้อนรับสู่บริการตู้ถ่ายรูปโฟโต้บูธ! ในระบบนี้คุณสามารถ **เลือกแบบกรอบรูป** จากนั้น **ถ่ายภาพ 15 ช็อต หรือถ่ายทีละรูป** แล้วจิ้มเลือกรูปที่คุณชอบที่สุดเพื่อนำไปจัดวางลงกรอบรูปได้ตามต้องการ
@@ -378,7 +376,7 @@
                 <div id="stepSection2" class="hidden bg-white rounded-3xl p-5 border border-sky-100 pastel-shadow space-y-3">
                     <h2 class="text-sm font-bold text-slate-800 flex items-center gap-2 border-b border-sky-100 pb-2">
                         <i class="fa-solid fa-border-all text-sky-500"></i>
-เลือกแบบกรอบรูป ( Choose Frame Template )
+                        2. เลือกแบบกรอบรูป ( Choose Frame Template )
                     </h2>
                     
                     <div id="categoryTabs" class="flex gap-2 mb-3 border-b border-sky-100 pb-2 overflow-x-auto custom-scrollbar">
@@ -410,7 +408,7 @@
                     <div class="flex items-center justify-between border-b border-sky-100 pb-2">
                         <h2 class="text-sm font-bold text-slate-800 flex items-center gap-2">
                             <i class="fa-solid fa-camera text-sky-500"></i>
-ถ่ายรูป และเลือกใส่กรอบ
+                            3. ถ่ายรูป และเลือกใส่กรอบ
                         </h2>
                     </div>
 
@@ -496,7 +494,7 @@
                         </div>
 
                         <p class="text-[11px] text-sky-700 bg-sky-50 px-2.5 py-1.5 rounded-xl border border-sky-100">
-                            <i class="fa-solid fa-hand-pointer mr-1"></i> <b>วิธีใช้:</b> จิ้มเลือกรูปจากคลังด้านบนลงช่องนี้ หรือใช้ 1 นิ้วลาก / 2 นิ้วหมุน-ซูมรูปภาพในกรอบพรีวิวได้ทันที (จำกัดเฉพาะในกรอบ)
+                            <i class="fa-solid fa-hand-pointer mr-1"></i> <b>วิธีใช้:</b> จิ้มเลือกรูปจากคลังด้านบนลงช่องนี้ หรือใช้ 1 นิ้วลาก / 2 นิ้วหมุน-ซูมรูปภาพในกรอบพรีวิวได้ทันที
                         </p>
 
                         <div class="grid grid-cols-2 gap-3 text-xs pt-1">
@@ -531,7 +529,7 @@
                 <div id="stepSection4" class="hidden bg-white rounded-3xl p-5 border border-sky-100 pastel-shadow space-y-4 w-full">
                     <h2 class="text-sm font-bold text-slate-800 flex items-center gap-2 pb-2 border-b border-sky-100">
                         <i class="fa-solid fa-print text-sky-500"></i>
-ข้อมูลสั่งพิมพ์รูป (Print Order)
+                        4. ข้อมูลสั่งพิมพ์รูป (Print Order)
                     </h2>
                     
                     <div class="grid grid-cols-1 sm:grid-cols-2 gap-3 text-xs">
@@ -545,7 +543,6 @@
                         </div>
                     </div>
 
-                    <!-- ส่วนสั่งพิมพ์รูปและกรอกโค้ดส่วนลด -->
                     <div class="space-y-3 pt-1">
                         <div>
                             <label class="block font-medium text-slate-600 mb-1">จำนวนที่ต้องการสั่งพิมพ์ (ใบ) <span class="text-rose-500">*</span></label>
@@ -556,7 +553,6 @@
                             </div>
                         </div>
 
-                        <!-- สรุปจำนวนโค้ดที่ต้องกรอกตามจำนวนพิมพ์ -->
                         <div class="bg-amber-50 border border-amber-200 p-3 rounded-2xl text-xs space-y-1">
                             <div class="flex items-center justify-between font-bold text-amber-800">
                                 <span><i class="fa-solid fa-ticket text-amber-500 mr-1"></i> จำนวนโค้ดที่ต้องใช้กรอก:</span>
@@ -565,15 +561,10 @@
                             <p class="text-[11px] text-amber-700">พิมพ์รูป <span id="reqQtyText" class="font-bold">1</span> ใบ ต้องใช้โค้ดจำนวน <span id="reqCodesText" class="font-bold">1</span> โค้ด (ซื้อได้ที่แคชเชียร์)</p>
                         </div>
 
-                        <!-- ฟิลด์สร้างช่องกรอกโค้ดตามจำนวน และแสดงสถานะว่ากรอกโค้ดไหนแล้วบ้าง -->
                         <div class="space-y-2">
                             <label class="block font-medium text-slate-600">กรอกโค้ดสั่งพิมพ์รูปตามจำนวนใบ <span class="text-rose-500">*</span></label>
-                            <div id="couponInputsContainer" class="space-y-2">
-                                <!-- Dynamic Coupon Inputs Container -->
-                            </div>
-                            <div id="couponStatusSummary" class="bg-slate-50 border border-slate-200 p-2.5 rounded-xl text-[11px] space-y-1">
-                                <!-- Status Summary Dynamic -->
-                            </div>
+                            <div id="couponInputsContainer" class="space-y-2"></div>
+                            <div id="couponStatusSummary" class="bg-slate-50 border border-slate-200 p-2.5 rounded-xl text-[11px] space-y-1"></div>
                         </div>
                     </div>
 
@@ -675,7 +666,7 @@
         </div>
     </div>
 
-    <!-- Hidden Container สำหรับสร้าง Layout การ์ดคูปองสำหรับพิมพ์ให้ลูกค้า -->
+    <!-- Printable coupons template container -->
     <div id="printCouponsContainer" class="hidden p-6 bg-white">
         <div class="text-center mb-6 pb-4 border-b">
             <h1 class="text-2xl font-bold text-slate-800">037Cafe & Studio - โค้ดสั่งพิมพ์รูป (Photo Booth)</h1>
@@ -739,7 +730,6 @@
             setupInteractiveCanvasControls();
         };
 
-        // ฟังก์ชันสุ่มโค้ดส่วนลด 10 โค้ด (แบบใช้ได้ครั้งเดียว)
         async function generate10RandomSingleUseCoupons() {
             if (!confirm('คุณต้องการสุ่มสร้างโค้ดใหม่ 10 โค้ด (ใช้ได้ครั้งเดียว) ใช่หรือไม่?')) return;
 
@@ -763,7 +753,6 @@
             alert('สุ่มสร้างโค้ดแบบใช้ได้ครั้งเดียว 10 โค้ดสำเร็จ!');
         }
 
-        // ฟังก์ชันกดพิมพ์โค้ดให้ลูกค้า
         function printCouponsForCustomers() {
             const printGrid = document.getElementById('printCouponsGrid');
             printGrid.innerHTML = '';
@@ -1391,7 +1380,7 @@
 
             const duplicateIndex = customerEnteredCoupons.findIndex((c, idx) => idx !== index && c === code && c !== '');
             if (duplicateIndex !== -1) {
-                return { isValid: false, borderColor: 'border-amber-400 bg-amber-50', icon: '⚠️️', message: 'โค้ดซ้ำกับช่องอื่น' };
+                return { isValid: false, borderColor: 'border-amber-400 bg-amber-50', icon: '⚠', message: 'โค้ดซ้ำกับช่องอื่น' };
             }
 
             const found = activeCoupons.find(c => c.code && c.code.toUpperCase() === code);
@@ -2076,7 +2065,132 @@
             document.getElementById('custRotate').value = currentSlotTransform.rotation || 0;
         }
 
-        // ระบบควบคุมโต้ตอบ ลาก วาง หมุน ซูม ภาพในกรอบอย่างอิสระ พร้อมขอบเขตล็อคในช่อง
+        function triggerFileInputForActiveSlot() {
+            document.getElementById('globalSlotFileInput').click();
+        }
+
+        function handleGlobalPhotoUpload(event) {
+            const file = event.target.files[0];
+            if (!file) return;
+
+            const reader = new FileReader();
+            reader.onload = function(e) {
+                const img = new Image();
+                img.onload = function() {
+                    captured15PhotosList.push(img);
+                    assignPhotoToCurrentActiveSlot(img);
+                };
+                img.src = e.target.result;
+            };
+            reader.readAsDataURL(file);
+            event.target.value = '';
+        }
+
+        function updateCustomerPhotoTransformFromInputs() {
+            if (!customerSlotData[activeCustomerSlotIndex]) {
+                customerSlotData[activeCustomerSlotIndex] = { img: null, xOffset: 0, yOffset: 0, scale: 1, rotation: 0 };
+            }
+            customerSlotData[activeCustomerSlotIndex].scale = parseFloat(document.getElementById('custZoom').value) || 1;
+            customerSlotData[activeCustomerSlotIndex].rotation = parseInt(document.getElementById('custRotate').value) || 0;
+            drawCustomerMainCanvas();
+        }
+
+        function resetActiveCustomerPhotoTransform() {
+            if (customerSlotData[activeCustomerSlotIndex]) {
+                customerSlotData[activeCustomerSlotIndex].xOffset = 0;
+                customerSlotData[activeCustomerSlotIndex].yOffset = 0;
+                customerSlotData[activeCustomerSlotIndex].scale = 1;
+                customerSlotData[activeCustomerSlotIndex].rotation = 0;
+                drawCustomerMainCanvas();
+            }
+        }
+
+        function downloadHighResImage() {
+            const canvas = document.getElementById('mainRenderCanvas');
+            const link = document.createElement('a');
+            link.download = `037Cafe_Photo_${Date.now()}.png`;
+            link.href = canvas.toDataURL('image/png');
+            link.click();
+        }
+
+        // ส่งข้อมูลเข้า Google Sheets Web App
+        async function submitCustomerOrder() {
+            const name = document.getElementById('custNickname').value.trim();
+            const phone = document.getElementById('custPhone').value.trim();
+            const qty = parseInt(document.getElementById('custQuantity').value) || 1;
+
+            if (!name || !phone) {
+                alert('กรุณากรอกชื่อและเบอร์โทรศัพท์ให้ครบถ้วน');
+                return;
+            }
+
+            for (let i = 0; i < qty; i++) {
+                const code = customerEnteredCoupons[i] || '';
+                const val = validateSingleCoupon(code, i);
+                if (!val.isValid) {
+                    alert(`กรุณากรอกโค้ดสั่งพิมพ์ช่องที่ ${i + 1} ให้ถูกต้อง (${val.message})`);
+                    return;
+                }
+            }
+
+            const currentTpl = templates[activeTemplateIndex];
+            const orderNo = 'ORD-' + Math.floor(100000 + Math.random() * 900000);
+            const couponCodesStr = customerEnteredCoupons.slice(0, qty).join(', ');
+
+            // ตัดสิทธิ์คูปองในระบบ
+            customerEnteredCoupons.slice(0, qty).forEach(code => {
+                const found = activeCoupons.find(c => c.code && c.code.toUpperCase() === code.toUpperCase());
+                if (found) {
+                    found.usedCount = (found.usedCount || 0) + 1;
+                }
+            });
+            await updateCloudSettings({ activeCoupons: activeCoupons });
+
+            // แสดงหน้าต่างสรุป
+            document.getElementById('recName').innerText = name;
+            document.getElementById('recPhone').innerText = phone;
+            document.getElementById('recTemplate').innerText = currentTpl.name;
+            document.getElementById('recQuantity').innerText = `${qty} ใบ`;
+            document.getElementById('recCoupons').innerText = couponCodesStr;
+            document.getElementById('recOrderNo').innerText = orderNo;
+            document.getElementById('googleSheetSyncStatus').innerText = '⏳ กำลังบันทึกข้อมูลลง Google Sheets...';
+            document.getElementById('receiptModal').classList.remove('hidden');
+
+            // ส่งข้อมูลไปยัง Google Sheets via Web App (POST request)
+            if (googleSheetScriptUrl) {
+                const payload = {
+                    action: 'addOrder',
+                    orderNo: orderNo,
+                    customerName: name,
+                    phone: phone,
+                    templateName: currentTpl.name,
+                    quantity: qty,
+                    coupons: couponCodesStr,
+                    timestamp: new Date().toLocaleString('th-TH')
+                };
+
+                try {
+                    await fetch(googleSheetScriptUrl, {
+                        method: 'POST',
+                        mode: 'no-cors',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify(payload)
+                    });
+                    document.getElementById('googleSheetSyncStatus').innerText = '✅ บันทึกข้อมูลเข้า Google Sheets สำเร็จแล้ว!';
+                } catch (e) {
+                    console.error("GSheet post error:", e);
+                    document.getElementById('googleSheetSyncStatus').innerText = '⚠️ การบันทึกลง Google Sheets ขัดข้อง แต่บันทึกสิทธิ์คูปองเรียบร้อยแล้ว';
+                }
+            } else {
+                document.getElementById('googleSheetSyncStatus').innerText = '⚠️ ยังไม่ได้ระบุ Google Sheets Web App URL';
+            }
+        }
+
+        function closeReceiptModal() {
+            document.getElementById('receiptModal').classList.add('hidden');
+            goToStep(1);
+        }
+
         function setupInteractiveCanvasControls() {
             const container = document.getElementById('customerCanvasContainer');
             if (!container) return;
@@ -2140,60 +2254,38 @@
                     }
                     initialSlotXOffset = customerSlotData[activeCustomerSlotIndex].xOffset || 0;
                     initialSlotYOffset = customerSlotData[activeCustomerSlotIndex].yOffset || 0;
-
                     drawCustomerMainCanvas();
                 }
             };
 
             const doDrag = (e) => {
-                if (!isPanningCustomerPhoto) return;
-                e.preventDefault();
-
-                const tpl = templates[activeTemplateIndex];
-                if (!tpl || !tpl.slots[activeCustomerSlotIndex]) return;
-                const slot = tpl.slots[activeCustomerSlotIndex];
-                const activeData = customerSlotData[activeCustomerSlotIndex];
-                if (!activeData || !activeData.img) return;
-
-                const rect = container.getBoundingClientRect();
-                const scaleFactor = BASE_WIDTH / rect.width;
+                if (!isPanningCustomerPhoto || currentStep !== 3) return;
 
                 if (e.touches && e.touches.length === 2) {
                     const { distance, angle } = getTouchDistanceAndAngle(e);
-                    const scaleDelta = distance / initialTouchDistance;
-                    const angleDelta = angle - initialTouchAngle;
+                    const scaleFactor = distance / initialTouchDistance;
+                    const newScale = Math.min(Math.max(initialPhotoScale * scaleFactor, 0.2), 4);
+                    const angleDiff = angle - initialTouchAngle;
+                    const newRotation = (initialPhotoRotation + angleDiff) % 360;
 
-                    activeData.scale = Math.min(Math.max(0.2, initialPhotoScale * scaleDelta), 4);
-                    activeData.rotation = Math.round((initialPhotoRotation + angleDelta) % 360);
-                } else {
-                    const clientX = e.touches ? e.touches[0].clientX : e.clientX;
-                    const clientY = e.touches ? e.touches[0].clientY : e.clientY;
-                    const deltaX = (clientX - panStartX) * scaleFactor;
-                    const deltaY = (clientY - panStartY) * scaleFactor;
-
-                    let newXOffset = initialSlotXOffset + deltaX;
-                    let newYOffset = initialSlotYOffset + deltaY;
-
-                    // คำนวณขอบเขตสัดส่วนเพื่อล็อครูปให้อยู่ในช่อง
-                    const scale = activeData.scale || 1;
-                    const imgAspect = activeData.img.width / activeData.img.height;
-                    const slotAspect = slot.w / slot.h;
-                    let drawW, drawH;
-                    if (imgAspect > slotAspect) {
-                        drawH = slot.h * scale;
-                        drawW = drawH * imgAspect;
-                    } else {
-                        drawW = slot.w * scale;
-                        drawH = drawW / imgAspect;
+                    if (customerSlotData[activeCustomerSlotIndex]) {
+                        customerSlotData[activeCustomerSlotIndex].scale = newScale;
+                        customerSlotData[activeCustomerSlotIndex].rotation = Math.round(newRotation);
                     }
-
-                    const maxOffsetX = Math.max(0, (drawW - slot.w) / 2 + slot.w * 0.5);
-                    const maxOffsetY = Math.max(0, (drawH - slot.h) / 2 + slot.h * 0.5);
-
-                    activeData.xOffset = Math.min(Math.max(newXOffset, -maxOffsetX), maxOffsetX);
-                    activeData.yOffset = Math.min(Math.max(newYOffset, -maxOffsetY), maxOffsetY);
+                    drawCustomerMainCanvas();
+                    return;
                 }
 
+                const clientX = e.touches ? e.touches[0].clientX : e.clientX;
+                const clientY = e.touches ? e.touches[0].clientY : e.clientY;
+                const rect = container.getBoundingClientRect();
+                const deltaX = (clientX - panStartX) * (BASE_WIDTH / rect.width);
+                const deltaY = (clientY - panStartY) * (BASE_HEIGHT / rect.height);
+
+                if (customerSlotData[activeCustomerSlotIndex]) {
+                    customerSlotData[activeCustomerSlotIndex].xOffset = initialSlotXOffset + deltaX;
+                    customerSlotData[activeCustomerSlotIndex].yOffset = initialSlotYOffset + deltaY;
+                }
                 drawCustomerMainCanvas();
             };
 
@@ -2205,152 +2297,9 @@
             window.addEventListener('mousemove', doDrag);
             window.addEventListener('mouseup', endDrag);
 
-            container.addEventListener('touchstart', startDrag, { passive: false });
-            window.addEventListener('touchmove', doDrag, { passive: false });
+            container.addEventListener('touchstart', startDrag, { passive: true });
+            window.addEventListener('touchmove', doDrag, { passive: true });
             window.addEventListener('touchend', endDrag);
-        }
-
-        function triggerFileInputForActiveSlot() {
-            document.getElementById('globalSlotFileInput').click();
-        }
-
-        function handleGlobalPhotoUpload(event) {
-            const file = event.target.files[0];
-            if (!file) return;
-
-            const reader = new FileReader();
-            reader.onload = function(e) {
-                const img = new Image();
-                img.onload = function() {
-                    captured15PhotosList.push(img);
-                    assignPhotoToCurrentActiveSlot(img);
-                };
-                img.src = e.target.result;
-            };
-            reader.readAsDataURL(file);
-            event.target.value = '';
-        }
-
-        function updateCustomerPhotoTransformFromInputs() {
-            if (!customerSlotData[activeCustomerSlotIndex]) {
-                customerSlotData[activeCustomerSlotIndex] = { img: null, xOffset: 0, yOffset: 0, scale: 1, rotation: 0 };
-            }
-            customerSlotData[activeCustomerSlotIndex].scale = parseFloat(document.getElementById('custZoom').value) || 1;
-            customerSlotData[activeCustomerSlotIndex].rotation = parseInt(document.getElementById('custRotate').value) || 0;
-            drawCustomerMainCanvas();
-        }
-
-        function resetActiveCustomerPhotoTransform() {
-            if (customerSlotData[activeCustomerSlotIndex]) {
-                customerSlotData[activeCustomerSlotIndex].xOffset = 0;
-                customerSlotData[activeCustomerSlotIndex].yOffset = 0;
-                customerSlotData[activeCustomerSlotIndex].scale = 1;
-                customerSlotData[activeCustomerSlotIndex].rotation = 0;
-                drawCustomerMainCanvas();
-            }
-        }
-
-        function downloadHighResImage() {
-            const canvas = document.getElementById('mainRenderCanvas');
-            const link = document.createElement('a');
-            link.download = `037Booth_${Date.now()}.png`;
-            link.href = canvas.toDataURL('image/png', 1.0);
-            link.click();
-        }
-
-        // ยืนยันสั่งพิมพ์รูป บีบอัดรูปส่งประสิทธิภาพเร็วสูง + ส่ง Google Sheet และ LINE
-        async function submitCustomerOrder() {
-            const name = document.getElementById('custNickname').value.trim();
-            const phone = document.getElementById('custPhone').value.trim();
-            const qty = parseInt(document.getElementById('custQuantity').value) || 1;
-
-            if (!name || !phone) {
-                alert('กรุณากรอกชื่อและเบอร์โทรศัพท์ก่อนทำการสั่งพิมพ์');
-                return;
-            }
-
-            for (let i = 0; i < qty; i++) {
-                const code = customerEnteredCoupons[i] || '';
-                const validation = validateSingleCoupon(code, i);
-                if (!validation.isValid) {
-                    alert(`กรุณากรอกโค้ดสั่งพิมพ์ให้ถูกต้องและครบถ้วนก่อนยืนยัน (ใบที่ ${i + 1}: ${validation.message})`);
-                    return;
-                }
-            }
-
-            const btnSubmit = document.getElementById('btnSubmitOrder');
-            btnSubmit.disabled = true;
-            btnSubmit.innerHTML = `<i class="fa-solid fa-spinner fa-spin mr-1"></i> กำลังส่งข้อมูล...`;
-
-            // บีบอัดภาพ Canvas ความละเอียดสูงให้มีขนาดเบาลง ส่งเข้า Google Sheet / Drive ได้รวดเร็วยิ่งขึ้น
-            const canvas = document.getElementById('mainRenderCanvas');
-            const compressedImageData = canvas.toDataURL('image/jpeg', 0.82);
-
-            const orderId = 'ORD-' + Date.now().toString().slice(-6);
-            const currentTpl = templates[activeTemplateIndex];
-            const couponsUsedString = customerEnteredCoupons.slice(0, qty).join(', ');
-
-            // ตัดสิทธิ์คูปองที่ใช้แล้ว
-            customerEnteredCoupons.slice(0, qty).forEach(code => {
-                const found = activeCoupons.find(c => c.code && c.code.toUpperCase() === code.toUpperCase());
-                if (found) {
-                    found.usedCount = (found.usedCount || 0) + 1;
-                }
-            });
-            await updateCloudSettings({ activeCoupons: activeCoupons });
-
-            document.getElementById('recName').innerText = name;
-            document.getElementById('recPhone').innerText = phone;
-            document.getElementById('recTemplate').innerText = currentTpl ? currentTpl.name : '-';
-            document.getElementById('recQuantity').innerText = `${qty} ใบ`;
-            document.getElementById('recCoupons').innerText = couponsUsedString;
-            document.getElementById('recOrderNo').innerText = orderId;
-
-            const syncStatusEl = document.getElementById('googleSheetSyncStatus');
-            syncStatusEl.innerHTML = `<i class="fa-solid fa-circle-notch fa-spin text-sky-500"></i> กำลังบันทึกข้อมูลลง Google Sheet และแจ้งเตือน LINE...`;
-            document.getElementById('receiptModal').classList.remove('hidden');
-
-            const payload = {
-                action: 'submitOrder',
-                orderId: orderId,
-                customerName: name,
-                customerPhone: phone,
-                templateName: currentTpl ? currentTpl.name : 'Unknown',
-                quantity: qty,
-                couponsUsed: couponsUsedString,
-                imageData: compressedImageData,
-                timestamp: new Date().toLocaleString('th-TH')
-            };
-
-            if (googleSheetScriptUrl) {
-                fetch(googleSheetScriptUrl, {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'text/plain;charset=utf-8' },
-                    body: JSON.stringify(payload)
-                })
-                .then(res => res.json())
-                .then(data => {
-                    if (data.status === 'success') {
-                        syncStatusEl.innerHTML = `<span class="text-emerald-600 font-bold"><i class="fa-solid fa-check-circle"></i> บันทึกข้อมูลลง Google Sheet & ส่ง LINE เรียบร้อยแล้ว!</span>`;
-                    } else {
-                        syncStatusEl.innerHTML = `<span class="text-amber-600 font-bold"><i class="fa-solid fa-triangle-exclamation"></i> บันทึกสำเร็จ (ส่ง LINE หรืออัปโหลดไฟล์สมบูรณ์)</span>`;
-                    }
-                })
-                .catch(err => {
-                    console.error("GSheet Sync Error:", err);
-                    syncStatusEl.innerHTML = `<span class="text-rose-500"><i class="fa-solid fa-triangle-exclamation"></i> การเชื่อมต่อ Google Sheet มีปัญหา แต่คำสั่งซื้อถูกบันทึกแล้ว</span>`;
-                });
-            } else {
-                syncStatusEl.innerHTML = `<span class="text-slate-400">ไม่ได้ตั้งค่า Google Sheet URL</span>`;
-            }
-
-            btnSubmit.disabled = false;
-            btnSubmit.innerHTML = `<i class="fa-solid fa-print"></i> ยืนยันการสั่งพิมพ์รูป`;
-        }
-
-        function closeReceiptModal() {
-            document.getElementById('receiptModal').classList.add('hidden');
-            goToStep(1);
         }
     </script>
 </body>

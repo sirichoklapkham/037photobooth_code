@@ -709,6 +709,7 @@
 
         let activeCoupons = defaultCoupons;
         let customerEnteredCoupons = []; 
+        let verifiedCouponIndexes = {}; // เก็บสถานะว่าช่องไหนกดตรวจสอบแล้วบ้าง
 
         let captured15PhotosList = [];
         let customerSlotData = [];
@@ -1335,14 +1336,28 @@
                 div.className = "flex gap-2 items-center";
 
                 const val = customerEnteredCoupons[i] || '';
+                const isVerified = verifiedCouponIndexes[i];
                 const validation = validateSingleCoupon(val, i);
+
+                let borderColor = 'border-sky-200';
+                let icon = '';
+
+                if (val !== '') {
+                    if (isVerified) {
+                        borderColor = validation.borderColor;
+                        icon = validation.icon;
+                    } else {
+                        borderColor = 'border-amber-300 bg-amber-50/30';
+                        icon = '🔍'; 
+                    }
+                }
 
                 div.innerHTML = `
                     <div class="relative flex-1">
-                        <input type="text" id="couponInput_${i}" value="${val}" placeholder="กรอกโค้ดที่ ${i + 1}" oninput="handleCouponInputChange(${i}, this.value)" class="w-full px-3 py-2 text-xs rounded-xl border ${validation.borderColor} uppercase font-mono pr-8 focus:outline-none">
-                        <span class="absolute right-2.5 top-2 text-xs">${validation.icon}</span>
+                        <input type="text" id="couponInput_${i}" value="${val}" placeholder="กรอกโค้ดที่ ${i + 1}" oninput="handleCouponInputChange(${i}, this.value)" class="w-full px-3 py-2 text-xs rounded-xl border ${borderColor} uppercase font-mono pr-8 focus:outline-none">
+                        <span class="absolute right-2.5 top-2 text-xs">${icon}</span>
                     </div>
-                    <button type="button" onclick="verifyAndCheckCoupon(${i})" class="px-3 py-2 bg-sky-500 hover:bg-sky-600 text-white text-xs font-semibold rounded-xl shrink-0 transition">
+                    <button type="button" onclick="verifyAndCheckCoupon(${i})" class="px-3 py-2 bg-sky-500 hover:bg-sky-600 text-white text-xs font-semibold rounded-xl shrink-0 transition shadow-xs active:scale-95">
                         ตรวจสอบ
                     </button>
                 `;
@@ -1354,6 +1369,7 @@
 
         function handleCouponInputChange(index, value) {
             customerEnteredCoupons[index] = value.trim().toUpperCase();
+            delete verifiedCouponIndexes[index]; // ยกเลิกสถานะตรวจสอบเมื่อพิมพ์แก้ไขโค้ดใหม่
             renderCouponInputs();
         }
 
@@ -1365,6 +1381,8 @@
             }
 
             const val = validateSingleCoupon(code, index);
+            verifiedCouponIndexes[index] = true; // บันทึกว่าผ่านการกดตรวจแล้ว
+
             if (val.isValid) {
                 alert(`✓ โค้ด "${code}" ถูกต้อง! สามารถใช้งานได้`);
             } else {
@@ -1408,19 +1426,27 @@
 
             for (let i = 0; i < qty; i++) {
                 const code = customerEnteredCoupons[i] || '';
+                const isVerified = verifiedCouponIndexes[i];
                 const validation = validateSingleCoupon(code, i);
 
-                if (validation.isValid) {
-                    validCount++;
-                    html += `<div class="text-emerald-600 flex justify-between items-center">
-                        <span>ใบที่ ${i + 1}: <b class="font-mono">${code}</b></span>
-                        <span class="font-semibold">✓ กรอกถูกต้อง</span>
-                    </div>`;
-                } else if (code !== '') {
-                    html += `<div class="text-rose-500 flex justify-between items-center">
-                        <span>ใบที่ ${i + 1}: <b class="font-mono">${code}</b></span>
-                        <span class="font-semibold">${validation.message}</span>
-                    </div>`;
+                if (code !== '') {
+                    if (isVerified && validation.isValid) {
+                        validCount++;
+                        html += `<div class="text-emerald-600 flex justify-between items-center">
+                            <span>ใบที่ ${i + 1}: <b class="font-mono">${code}</b></span>
+                            <span class="font-semibold">✓ โค้ดถูกต้อง</span>
+                        </div>`;
+                    } else if (isVerified && !validation.isValid) {
+                        html += `<div class="text-rose-500 flex justify-between items-center">
+                            <span>ใบที่ ${i + 1}: <b class="font-mono">${code}</b></span>
+                            <span class="font-semibold">${validation.message}</span>
+                        </div>`;
+                    } else {
+                        html += `<div class="text-amber-600 flex justify-between items-center">
+                            <span>ใบที่ ${i + 1}: <b class="font-mono">${code}</b></span>
+                            <span class="font-semibold">รอกดตรวจสอบ</span>
+                        </div>`;
+                    }
                 } else {
                     html += `<div class="text-slate-400 flex justify-between items-center">
                         <span>ใบที่ ${i + 1}: <i class="text-slate-300">ยังไม่ได้กรอก</i></span>
@@ -1434,10 +1460,10 @@
             if (summaryCouponStatus) {
                 if (validCount === qty) {
                     summaryCouponStatus.className = "font-bold text-emerald-600";
-                    summaryCouponStatus.innerText = `กรอกครบแล้ว (${validCount}/${qty} โค้ด)`;
+                    summaryCouponStatus.innerText = `กรอกและตรวจสอบครบแล้ว (${validCount}/${qty} โค้ด)`;
                 } else {
                     summaryCouponStatus.className = "font-bold text-rose-500";
-                    summaryCouponStatus.innerText = `ยังกรอกไม่ครบ (${validCount}/${qty} โค้ด)`;
+                    summaryCouponStatus.innerText = `ยังตรวจสอบโค้ดไม่ครบ (${validCount}/${qty} โค้ด)`;
                 }
             }
         }
@@ -2113,6 +2139,39 @@
             link.click();
         }
 
+        function setupInteractiveCanvasControls() {
+            const container = document.getElementById('customerCanvasContainer');
+            if (!container) return;
+
+            container.addEventListener('pointerdown', (e) => {
+                isPanningCustomerPhoto = true;
+                panStartX = e.clientX;
+                panStartY = e.clientY;
+
+                if (!customerSlotData[activeCustomerSlotIndex]) {
+                    customerSlotData[activeCustomerSlotIndex] = { img: null, xOffset: 0, yOffset: 0, scale: 1, rotation: 0 };
+                }
+
+                initialSlotXOffset = customerSlotData[activeCustomerSlotIndex].xOffset || 0;
+                initialSlotYOffset = customerSlotData[activeCustomerSlotIndex].yOffset || 0;
+            });
+
+            window.addEventListener('pointermove', (e) => {
+                if (!isPanningCustomerPhoto) return;
+                const dx = (e.clientX - panStartX) * (BASE_WIDTH / 380);
+                const dy = (e.clientY - panStartY) * (BASE_HEIGHT / 570);
+
+                if (customerSlotData[activeCustomerSlotIndex]) {
+                    customerSlotData[activeCustomerSlotIndex].xOffset = initialSlotXOffset + dx;
+                    customerSlotData[activeCustomerSlotIndex].yOffset = initialSlotYOffset + dy;
+                    drawCustomerMainCanvas();
+                }
+            });
+
+            window.addEventListener('pointerup', () => { isPanningCustomerPhoto = false; });
+            window.addEventListener('pointercancel', () => { isPanningCustomerPhoto = false; });
+        }
+
         // ส่งข้อมูลเข้า Google Sheets Web App
         async function submitCustomerOrder() {
             const name = document.getElementById('custNickname').value.trim();
@@ -2124,11 +2183,26 @@
                 return;
             }
 
+            // ตรวจสอบความถูกต้องของโค้ดทั้งหมดอีกครั้งก่อนส่งสั่งพิมพ์
             for (let i = 0; i < qty; i++) {
                 const code = customerEnteredCoupons[i] || '';
+                
+                if (!code) {
+                    alert(`กรุณากรอกโค้ดสั่งพิมพ์ช่องที่ ${i + 1}`);
+                    renderCouponInputs();
+                    return;
+                }
+
+                if (!verifiedCouponIndexes[i]) {
+                    alert(`กรุณากดปุ่ม "ตรวจสอบ" โค้ดในช่องที่ ${i + 1} ก่อนทำการส่งรายการ`);
+                    renderCouponInputs();
+                    return;
+                }
+
                 const val = validateSingleCoupon(code, i);
                 if (!val.isValid) {
-                    alert(`กรุณากรอกโค้ดสั่งพิมพ์ช่องที่ ${i + 1} ให้ถูกต้อง (${val.message})`);
+                    alert(`โค้ดสั่งพิมพ์ช่องที่ ${i + 1} ไม่ถูกต้อง: ${val.message}`);
+                    renderCouponInputs();
                     return;
                 }
             }
@@ -2146,160 +2220,61 @@
             });
             await updateCloudSettings({ activeCoupons: activeCoupons });
 
-            // แสดงหน้าต่างสรุป
+            // แสดงหน้าต่างใบเสร็จสรุป
             document.getElementById('recName').innerText = name;
             document.getElementById('recPhone').innerText = phone;
             document.getElementById('recTemplate').innerText = currentTpl.name;
             document.getElementById('recQuantity').innerText = `${qty} ใบ`;
             document.getElementById('recCoupons').innerText = couponCodesStr;
             document.getElementById('recOrderNo').innerText = orderNo;
-            document.getElementById('googleSheetSyncStatus').innerText = '⏳ กำลังบันทึกข้อมูลลง Google Sheets...';
-            document.getElementById('receiptModal').classList.remove('hidden');
 
-            // ส่งข้อมูลไปยัง Google Sheets via Web App (POST request)
+            const modal = document.getElementById('receiptModal');
+            const statusEl = document.getElementById('googleSheetSyncStatus');
+            modal.classList.remove('hidden');
+            statusEl.innerHTML = `<i class="fa-solid fa-spinner fa-spin text-sky-500"></i> กำลังบันทึกข้อมูลไปยังระบบ...`;
+
+            // ส่งข้อมูลไปยัง Google Sheets Web App
             if (googleSheetScriptUrl) {
-                const payload = {
-                    action: 'addOrder',
-                    orderNo: orderNo,
-                    customerName: name,
-                    phone: phone,
-                    templateName: currentTpl.name,
-                    quantity: qty,
-                    coupons: couponCodesStr,
-                    timestamp: new Date().toLocaleString('th-TH')
-                };
-
                 try {
-                    await fetch(googleSheetScriptUrl, {
+                    const canvas = document.getElementById('mainRenderCanvas');
+                    const imgDataBase64 = canvas.toDataURL('image/png');
+
+                    const payload = {
+                        action: 'newOrder',
+                        orderNo: orderNo,
+                        customerName: name,
+                        customerPhone: phone,
+                        templateName: currentTpl.name,
+                        quantity: qty,
+                        coupons: couponCodesStr,
+                        imageData: imgDataBase64,
+                        timestamp: new Date().toLocaleString('th-TH')
+                    };
+
+                    const response = await fetch(googleSheetScriptUrl, {
                         method: 'POST',
-                        mode: 'no-cors',
-                        headers: { 'Content-Type': 'application/json' },
+                        headers: { 'Content-Type': 'text/plain;charset=utf-8' },
                         body: JSON.stringify(payload)
                     });
-                    document.getElementById('googleSheetSyncStatus').innerText = '✅ บันทึกข้อมูลเข้า Google Sheets สำเร็จแล้ว!';
-                } catch (e) {
-                    console.error("GSheet post error:", e);
-                    document.getElementById('googleSheetSyncStatus').innerText = '⚠️ การบันทึกลง Google Sheets ขัดข้อง แต่บันทึกสิทธิ์คูปองเรียบร้อยแล้ว';
+
+                    const resJson = await response.json();
+                    if (resJson && resJson.status === 'success') {
+                        statusEl.innerHTML = `<span class="text-emerald-600 font-bold"><i class="fa-solid fa-circle-check"></i> บันทึกข้อมูลเข้า Google Sheets สำเร็จ</span>`;
+                    } else {
+                        statusEl.innerHTML = `<span class="text-amber-600 font-semibold"><i class="fa-solid fa-triangle-exclamation"></i> บันทึกคำสั่งซื้อแล้ว (Google Sheet ตอบกลับไม่ตรงรูปแบบ)</span>`;
+                    }
+                } catch (err) {
+                    console.error("Google Sheets Submission Error:", err);
+                    statusEl.innerHTML = `<span class="text-amber-600 font-semibold"><i class="fa-solid fa-circle-exclamation"></i> บันทึกรายการสำเร็จ (ไม่ได้เชื่อมต่อ Google Sheet)</span>`;
                 }
             } else {
-                document.getElementById('googleSheetSyncStatus').innerText = '⚠️ ยังไม่ได้ระบุ Google Sheets Web App URL';
+                statusEl.innerHTML = `<span class="text-slate-400"><i class="fa-solid fa-info-circle"></i> บันทึกรายการในเครื่องเรียบร้อย</span>`;
             }
         }
 
         function closeReceiptModal() {
             document.getElementById('receiptModal').classList.add('hidden');
             goToStep(1);
-        }
-
-        function setupInteractiveCanvasControls() {
-            const container = document.getElementById('customerCanvasContainer');
-            if (!container) return;
-
-            function getCanvasCoordinates(e) {
-                const rect = container.getBoundingClientRect();
-                const clientX = e.touches ? e.touches[0].clientX : e.clientX;
-                const clientY = e.touches ? e.touches[0].clientY : e.clientY;
-                const x = (clientX - rect.left) * (BASE_WIDTH / rect.width);
-                const y = (clientY - rect.top) * (BASE_HEIGHT / rect.height);
-                return { x, y, clientX, clientY };
-            }
-
-            function getTouchDistanceAndAngle(e) {
-                const t1 = e.touches[0];
-                const t2 = e.touches[1];
-                const dx = t2.clientX - t1.clientX;
-                const dy = t2.clientY - t1.clientY;
-                const distance = Math.hypot(dx, dy);
-                const angle = Math.atan2(dy, dx) * (180 / Math.PI);
-                return { distance, angle };
-            }
-
-            function findClickedSlotIndex(canvasX, canvasY) {
-                const tpl = templates[activeTemplateIndex];
-                if (!tpl || !tpl.slots) return -1;
-                return tpl.slots.findIndex(s => 
-                    canvasX >= s.x && canvasX <= s.x + s.w &&
-                    canvasY >= s.y && canvasY <= s.y + s.h
-                );
-            }
-
-            const startDrag = (e) => {
-                if (currentStep !== 3) return;
-                
-                const tpl = templates[activeTemplateIndex];
-                if (!tpl || !tpl.slots) return;
-
-                if (e.touches && e.touches.length === 2) {
-                    isPanningCustomerPhoto = true;
-                    const { distance, angle } = getTouchDistanceAndAngle(e);
-                    initialTouchDistance = distance;
-                    initialTouchAngle = angle;
-                    const activeData = customerSlotData[activeCustomerSlotIndex] || { scale: 1, rotation: 0 };
-                    initialPhotoScale = activeData.scale || 1;
-                    initialPhotoRotation = activeData.rotation || 0;
-                    return;
-                }
-
-                const coords = getCanvasCoordinates(e);
-                const clickedIdx = findClickedSlotIndex(coords.x, coords.y);
-
-                if (clickedIdx !== -1) {
-                    activeCustomerSlotIndex = clickedIdx;
-                    isPanningCustomerPhoto = true;
-                    panStartX = coords.clientX;
-                    panStartY = coords.clientY;
-
-                    if (!customerSlotData[activeCustomerSlotIndex]) {
-                        customerSlotData[activeCustomerSlotIndex] = { img: null, xOffset: 0, yOffset: 0, scale: 1, rotation: 0 };
-                    }
-                    initialSlotXOffset = customerSlotData[activeCustomerSlotIndex].xOffset || 0;
-                    initialSlotYOffset = customerSlotData[activeCustomerSlotIndex].yOffset || 0;
-                    drawCustomerMainCanvas();
-                }
-            };
-
-            const doDrag = (e) => {
-                if (!isPanningCustomerPhoto || currentStep !== 3) return;
-
-                if (e.touches && e.touches.length === 2) {
-                    const { distance, angle } = getTouchDistanceAndAngle(e);
-                    const scaleFactor = distance / initialTouchDistance;
-                    const newScale = Math.min(Math.max(initialPhotoScale * scaleFactor, 0.2), 4);
-                    const angleDiff = angle - initialTouchAngle;
-                    const newRotation = (initialPhotoRotation + angleDiff) % 360;
-
-                    if (customerSlotData[activeCustomerSlotIndex]) {
-                        customerSlotData[activeCustomerSlotIndex].scale = newScale;
-                        customerSlotData[activeCustomerSlotIndex].rotation = Math.round(newRotation);
-                    }
-                    drawCustomerMainCanvas();
-                    return;
-                }
-
-                const clientX = e.touches ? e.touches[0].clientX : e.clientX;
-                const clientY = e.touches ? e.touches[0].clientY : e.clientY;
-                const rect = container.getBoundingClientRect();
-                const deltaX = (clientX - panStartX) * (BASE_WIDTH / rect.width);
-                const deltaY = (clientY - panStartY) * (BASE_HEIGHT / rect.height);
-
-                if (customerSlotData[activeCustomerSlotIndex]) {
-                    customerSlotData[activeCustomerSlotIndex].xOffset = initialSlotXOffset + deltaX;
-                    customerSlotData[activeCustomerSlotIndex].yOffset = initialSlotYOffset + deltaY;
-                }
-                drawCustomerMainCanvas();
-            };
-
-            const endDrag = () => {
-                isPanningCustomerPhoto = false;
-            };
-
-            container.addEventListener('mousedown', startDrag);
-            window.addEventListener('mousemove', doDrag);
-            window.addEventListener('mouseup', endDrag);
-
-            container.addEventListener('touchstart', startDrag, { passive: true });
-            window.addEventListener('touchmove', doDrag, { passive: true });
-            window.addEventListener('touchend', endDrag);
         }
     </script>
 </body>

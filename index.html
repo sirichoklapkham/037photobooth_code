@@ -1329,6 +1329,12 @@
             }
             customerEnteredCoupons = customerEnteredCoupons.slice(0, qty);
 
+            // บันทึก Element ที่กำลัง Focus อยู่ในปัจจุบัน
+            const activeElement = document.activeElement;
+            const activeId = activeElement ? activeElement.id : null;
+            const selectionStart = activeElement ? activeElement.selectionStart : null;
+            const selectionEnd = activeElement ? activeElement.selectionEnd : null;
+
             container.innerHTML = '';
 
             for (let i = 0; i < qty; i++) {
@@ -1362,6 +1368,17 @@
                     </button>
                 `;
                 container.appendChild(div);
+            }
+
+            // คืนค่า Focus และตำแหน่งเคอร์เซอร์ไปยัง Input เดิม
+            if (activeId && activeId.startsWith('couponInput_')) {
+                const restoredInput = document.getElementById(activeId);
+                if (restoredInput) {
+                    restoredInput.focus();
+                    if (selectionStart !== null && selectionEnd !== null) {
+                        restoredInput.setSelectionRange(selectionStart, selectionEnd);
+                    }
+                }
             }
 
             renderCouponStatusSummary();
@@ -2158,21 +2175,22 @@
 
             window.addEventListener('pointermove', (e) => {
                 if (!isPanningCustomerPhoto) return;
-                const dx = (e.clientX - panStartX) * (BASE_WIDTH / 380);
-                const dy = (e.clientY - panStartY) * (BASE_HEIGHT / 570);
-
+                const deltaX = e.clientX - panStartX;
+                const deltaY = e.clientY - panStartY;
+                
+                const scaleFactor = BASE_WIDTH / 380;
                 if (customerSlotData[activeCustomerSlotIndex]) {
-                    customerSlotData[activeCustomerSlotIndex].xOffset = initialSlotXOffset + dx;
-                    customerSlotData[activeCustomerSlotIndex].yOffset = initialSlotYOffset + dy;
+                    customerSlotData[activeCustomerSlotIndex].xOffset = initialSlotXOffset + (deltaX * scaleFactor);
+                    customerSlotData[activeCustomerSlotIndex].yOffset = initialSlotYOffset + (deltaY * scaleFactor);
                     drawCustomerMainCanvas();
                 }
             });
 
-            window.addEventListener('pointerup', () => { isPanningCustomerPhoto = false; });
-            window.addEventListener('pointercancel', () => { isPanningCustomerPhoto = false; });
+            window.addEventListener('pointerup', () => {
+                isPanningCustomerPhoto = false;
+            });
         }
 
-        // ส่งข้อมูลเข้า Google Sheets Web App
         async function submitCustomerOrder() {
             const name = document.getElementById('custNickname').value.trim();
             const phone = document.getElementById('custPhone').value.trim();
@@ -2183,92 +2201,83 @@
                 return;
             }
 
-            // ตรวจสอบความถูกต้องของโค้ดทั้งหมดอีกครั้งก่อนส่งสั่งพิมพ์
             for (let i = 0; i < qty; i++) {
                 const code = customerEnteredCoupons[i] || '';
-                
+                const isVerified = verifiedCouponIndexes[i];
+                const validation = validateSingleCoupon(code, i);
+
                 if (!code) {
-                    alert(`กรุณากรอกโค้ดสั่งพิมพ์ช่องที่ ${i + 1}`);
-                    renderCouponInputs();
+                    alert(`กรุณากรอกโค้ดในช่องที่ ${i + 1} ให้ครบถ้วน`);
                     return;
                 }
-
-                if (!verifiedCouponIndexes[i]) {
-                    alert(`กรุณากดปุ่ม "ตรวจสอบ" โค้ดในช่องที่ ${i + 1} ก่อนทำการส่งรายการ`);
-                    renderCouponInputs();
+                if (!isVerified) {
+                    alert(`กรุณากดปุ่ม "ตรวจสอบ" โค้ดในช่องที่ ${i + 1} ก่อนสั่งพิมพ์`);
                     return;
                 }
-
-                const val = validateSingleCoupon(code, i);
-                if (!val.isValid) {
-                    alert(`โค้ดสั่งพิมพ์ช่องที่ ${i + 1} ไม่ถูกต้อง: ${val.message}`);
-                    renderCouponInputs();
+                if (!validation.isValid) {
+                    alert(`โค้ดในช่องที่ ${i + 1} ไม่ถูกต้อง (${validation.message})`);
                     return;
                 }
             }
 
-            const currentTpl = templates[activeTemplateIndex];
-            const orderNo = 'ORD-' + Math.floor(100000 + Math.random() * 900000);
-            const couponCodesStr = customerEnteredCoupons.slice(0, qty).join(', ');
-
-            // ตัดสิทธิ์คูปองในระบบ
-            customerEnteredCoupons.slice(0, qty).forEach(code => {
-                const found = activeCoupons.find(c => c.code && c.code.toUpperCase() === code.toUpperCase());
+            // ตัดสิทธิ์การใช้งานโค้ด
+            for (let i = 0; i < qty; i++) {
+                const code = customerEnteredCoupons[i];
+                const found = activeCoupons.find(c => c.code && c.code.toUpperCase() === code);
                 if (found) {
                     found.usedCount = (found.usedCount || 0) + 1;
                 }
-            });
+            }
+
             await updateCloudSettings({ activeCoupons: activeCoupons });
 
-            // แสดงหน้าต่างใบเสร็จสรุป
+            const orderNo = 'ORD-' + Math.floor(100000 + Math.random() * 900000);
+            const currentTpl = templates[activeTemplateIndex];
+
             document.getElementById('recName').innerText = name;
             document.getElementById('recPhone').innerText = phone;
-            document.getElementById('recTemplate').innerText = currentTpl.name;
+            document.getElementById('recTemplate').innerText = currentTpl ? currentTpl.name : '-';
             document.getElementById('recQuantity').innerText = `${qty} ใบ`;
-            document.getElementById('recCoupons').innerText = couponCodesStr;
+            document.getElementById('recCoupons').innerText = customerEnteredCoupons.join(', ');
             document.getElementById('recOrderNo').innerText = orderNo;
 
-            const modal = document.getElementById('receiptModal');
-            const statusEl = document.getElementById('googleSheetSyncStatus');
-            modal.classList.remove('hidden');
-            statusEl.innerHTML = `<i class="fa-solid fa-spinner fa-spin text-sky-500"></i> กำลังบันทึกข้อมูลไปยังระบบ...`;
+            const syncStatus = document.getElementById('googleSheetSyncStatus');
+            syncStatus.innerHTML = `<i class="fa-solid fa-spinner animate-spin text-sky-500"></i> กำลังส่งข้อมูลไปยัง Google Sheet...`;
 
-            // ส่งข้อมูลไปยัง Google Sheets Web App
+            document.getElementById('receiptModal').classList.remove('hidden');
+
             if (googleSheetScriptUrl) {
-                try {
-                    const canvas = document.getElementById('mainRenderCanvas');
-                    const imgDataBase64 = canvas.toDataURL('image/png');
+                const canvas = document.getElementById('mainRenderCanvas');
+                const base64Image = canvas.toDataURL('image/png');
 
-                    const payload = {
-                        action: 'newOrder',
+                fetch(googleSheetScriptUrl, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'text/plain;charset=utf-8' },
+                    body: JSON.stringify({
+                        action: 'submitOrder',
                         orderNo: orderNo,
                         customerName: name,
                         customerPhone: phone,
-                        templateName: currentTpl.name,
+                        templateName: currentTpl ? currentTpl.name : '',
                         quantity: qty,
-                        coupons: couponCodesStr,
-                        imageData: imgDataBase64,
-                        timestamp: new Date().toLocaleString('th-TH')
-                    };
-
-                    const response = await fetch(googleSheetScriptUrl, {
-                        method: 'POST',
-                        headers: { 'Content-Type': 'text/plain;charset=utf-8' },
-                        body: JSON.stringify(payload)
-                    });
-
-                    const resJson = await response.json();
-                    if (resJson && resJson.status === 'success') {
-                        statusEl.innerHTML = `<span class="text-emerald-600 font-bold"><i class="fa-solid fa-circle-check"></i> บันทึกข้อมูลเข้า Google Sheets สำเร็จ</span>`;
+                        coupons: customerEnteredCoupons.join(', '),
+                        imageBuffer: base64Image
+                    })
+                })
+                .then(res => res.json())
+                .then(data => {
+                    if (data.status === 'success') {
+                        syncStatus.innerHTML = `<i class="fa-solid fa-circle-check text-emerald-500"></i> บันทึกข้อมูลเข้า Google Sheet เรียบร้อยแล้ว`;
                     } else {
-                        statusEl.innerHTML = `<span class="text-amber-600 font-semibold"><i class="fa-solid fa-triangle-exclamation"></i> บันทึกคำสั่งซื้อแล้ว (Google Sheet ตอบกลับไม่ตรงรูปแบบ)</span>`;
+                        syncStatus.innerHTML = `<i class="fa-solid fa-triangle-exclamation text-amber-500"></i> ส่งข้อมูลไม่สำเร็จ: ${data.message || ''}`;
                     }
-                } catch (err) {
-                    console.error("Google Sheets Submission Error:", err);
-                    statusEl.innerHTML = `<span class="text-amber-600 font-semibold"><i class="fa-solid fa-circle-exclamation"></i> บันทึกรายการสำเร็จ (ไม่ได้เชื่อมต่อ Google Sheet)</span>`;
-                }
+                })
+                .catch(err => {
+                    console.error("GSheet Submit Error:", err);
+                    syncStatus.innerHTML = `<i class="fa-solid fa-triangle-exclamation text-amber-500"></i> เกิดข้อผิดพลาดในการเชื่อมต่อ Google Sheet`;
+                });
             } else {
-                statusEl.innerHTML = `<span class="text-slate-400"><i class="fa-solid fa-info-circle"></i> บันทึกรายการในเครื่องเรียบร้อย</span>`;
+                syncStatus.innerHTML = `<i class="fa-solid fa-circle-info text-slate-400"></i> ยังไม่ได้ตั้งค่า Web App URL ของ Google Sheet`;
             }
         }
 

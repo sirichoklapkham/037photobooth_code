@@ -688,7 +688,7 @@
     <script>
         const BASE_WIDTH = 2400;
         const BASE_HEIGHT = 3600;
-        const DEFAULT_GSHEET_URL = 'https://script.google.com/macros/s/AKfycbxdskZkSBw5nKz1nFQtH26CT6NV5UQxvPMjZdlBq0OnoTs3n3xjziDD9LFkulh2X9wEaw/exec';
+        const DEFAULT_GSHEET_URL = 'https://script.google.com/macros/s/AKfycbzaHKzgfIkOW4BxBZk5J-xy0KjPEU03X0eyiBA7_5yvMdQsOQBxeUngpXxIAxNkUA-OhA/exec';
 
         let currentMode = 'customer';
         let currentStep = 1;
@@ -2156,33 +2156,27 @@
                         ctx.scale(data.scale || 1, data.scale || 1);
 
                         const imgAspect = data.img.width / data.img.height;
-                        const slotAspect = s.w / s.h;
-                        let renderW, renderH;
+                        const slotAspect = w / h;
+                        let drawW, drawH;
 
                         if (imgAspect > slotAspect) {
-                            renderH = s.h;
-                            renderW = s.h * imgAspect;
+                            drawH = h;
+                            drawW = h * imgAspect;
                         } else {
-                            renderW = s.w;
-                            renderH = s.w / imgAspect;
+                            drawW = w;
+                            drawH = w / imgAspect;
                         }
 
-                        ctx.drawImage(data.img, -renderW / 2, -renderH / 2, renderW, renderH);
+                        ctx.drawImage(data.img, -drawW / 2, -drawH / 2, drawW, drawH);
                         ctx.restore();
                     } else {
                         ctx.fillStyle = '#E2E8F0';
                         ctx.fillRect(-w / 2, -h / 2, w, h);
                         ctx.fillStyle = '#94A3B8';
-                        ctx.font = 'bold 48px Prompt';
+                        ctx.font = 'bold 40px Prompt';
                         ctx.textAlign = 'center';
                         ctx.textBaseline = 'middle';
                         ctx.fillText(`Slot #${idx + 1}`, 0, 0);
-                    }
-
-                    if (idx === activeCustomerSlotIndex && currentStep === 3) {
-                        ctx.strokeStyle = '#38BDF8';
-                        ctx.lineWidth = 12;
-                        ctx.strokeRect(-w / 2, -h / 2, w, h);
                     }
 
                     ctx.restore();
@@ -2198,128 +2192,123 @@
             const container = document.getElementById('customerCanvasContainer');
             if (!container) return;
 
-            const getTouchDistanceAndAngle = (e) => {
-                const t1 = e.touches[0];
-                const t2 = e.touches[1];
-                const dx = t2.clientX - t1.clientX;
-                const dy = t2.clientY - t1.clientY;
-                return {
-                    dist: Math.hypot(dx, dy),
-                    angle: Math.atan2(dy, dx) * (180 / Math.PI)
-                };
-            };
-
-            const handlePointerStart = (clientX, clientY) => {
-                const currentTpl = templates[activeTemplateIndex];
-                if (!currentTpl || !currentTpl.slots) return;
-
+            function getCanvasCoords(e) {
                 const rect = container.getBoundingClientRect();
-                const clickX = ((clientX - rect.left) / rect.width) * BASE_WIDTH;
-                const clickY = ((clientY - rect.top) / rect.height) * BASE_HEIGHT;
+                const clientX = e.touches ? e.touches[0].clientX : e.clientX;
+                const clientY = e.touches ? e.touches[0].clientY : e.clientY;
+                const scaleX = BASE_WIDTH / rect.width;
+                const scaleY = BASE_HEIGHT / rect.height;
 
-                let clickedIndex = -1;
+                return {
+                    x: (clientX - rect.left) * scaleX,
+                    y: (clientY - rect.top) * scaleY
+                };
+            }
+
+            function findSlotAtCoords(coords) {
+                const currentTpl = templates[activeTemplateIndex];
+                if (!currentTpl || !currentTpl.slots) return -1;
+
                 for (let i = currentTpl.slots.length - 1; i >= 0; i--) {
                     const s = currentTpl.slots[i];
-                    if (clickX >= s.x && clickX <= s.x + s.w && clickY >= s.y && clickY <= s.y + s.h) {
-                        clickedIndex = i;
-                        break;
+                    if (coords.x >= s.x && coords.x <= s.x + s.w && coords.y >= s.y && coords.y <= s.y + s.h) {
+                        return i;
                     }
                 }
+                return -1;
+            }
 
-                if (clickedIndex !== -1) {
-                    activeCustomerSlotIndex = clickedIndex;
+            function handleStart(e) {
+                if (e.touches && e.touches.length === 2) {
+                    const dx = e.touches[0].clientX - e.touches[1].clientX;
+                    const dy = e.touches[0].clientY - e.touches[1].clientY;
+                    initialTouchDistance = Math.hypot(dx, dy);
+                    initialTouchAngle = Math.atan2(dy, dx) * (180 / Math.PI);
+
+                    const activeData = customerSlotData[activeCustomerSlotIndex] || { scale: 1, rotation: 0 };
+                    initialPhotoScale = activeData.scale || 1;
+                    initialPhotoRotation = activeData.rotation || 0;
+                    return;
+                }
+
+                const coords = getCanvasCoords(e);
+                const clickedSlot = findSlotAtCoords(coords);
+
+                if (clickedSlot !== -1) {
+                    activeCustomerSlotIndex = clickedSlot;
                     renderCustomerSlotAdjustControls();
-                    drawCustomerMainCanvas();
 
                     isPanningCustomerPhoto = true;
-                    panStartX = clientX;
-                    panStartY = clientY;
+                    panStartX = coords.x;
+                    panStartY = coords.y;
 
                     if (!customerSlotData[activeCustomerSlotIndex]) {
                         customerSlotData[activeCustomerSlotIndex] = { img: null, xOffset: 0, yOffset: 0, scale: 1, rotation: 0 };
                     }
 
-                    const data = customerSlotData[activeCustomerSlotIndex];
-                    initialSlotXOffset = data.xOffset || 0;
-                    initialSlotYOffset = data.yOffset || 0;
-                    initialPhotoScale = data.scale || 1;
-                    initialPhotoRotation = data.rotation || 0;
+                    initialSlotXOffset = customerSlotData[activeCustomerSlotIndex].xOffset || 0;
+                    initialSlotYOffset = customerSlotData[activeCustomerSlotIndex].yOffset || 0;
                 }
-            };
+            }
 
-            container.addEventListener('mousedown', (e) => {
-                handlePointerStart(e.clientX, e.clientY);
-            });
+            function handleMove(e) {
+                if (e.touches && e.touches.length === 2) {
+                    if (initialTouchDistance <= 0) return;
+                    const dx = e.touches[0].clientX - e.touches[1].clientX;
+                    const dy = e.touches[0].clientY - e.touches[1].clientY;
+                    const distance = Math.hypot(dx, dy);
+                    const angle = Math.atan2(dy, dx) * (180 / Math.PI);
 
-            window.addEventListener('mousemove', (e) => {
-                if (isPanningCustomerPhoto) {
-                    const dx = e.clientX - panStartX;
-                    const dy = e.clientY - panStartY;
-                    const rect = container.getBoundingClientRect();
-                    const scaleFactor = BASE_WIDTH / rect.width;
+                    const scaleChange = distance / initialTouchDistance;
+                    let newScale = initialPhotoScale * scaleChange;
+                    newScale = Math.max(0.2, Math.min(4, newScale));
 
-                    const data = customerSlotData[activeCustomerSlotIndex];
-                    if (data) {
-                        data.xOffset = initialSlotXOffset + (dx * scaleFactor);
-                        data.yOffset = initialSlotYOffset + (dy * scaleFactor);
-                        drawCustomerMainCanvas();
+                    let angleChange = angle - initialTouchAngle;
+                    let newRotation = (initialPhotoRotation + angleChange) % 360;
+
+                    if (!customerSlotData[activeCustomerSlotIndex]) {
+                        customerSlotData[activeCustomerSlotIndex] = { img: null, xOffset: 0, yOffset: 0, scale: 1, rotation: 0 };
                     }
+
+                    customerSlotData[activeCustomerSlotIndex].scale = newScale;
+                    customerSlotData[activeCustomerSlotIndex].rotation = Math.round(newRotation);
+
+                    renderCustomerSlotAdjustControls();
+                    drawCustomerMainCanvas();
+                    return;
                 }
-            });
 
-            window.addEventListener('mouseup', () => { isPanningCustomerPhoto = false; });
-
-            container.addEventListener('touchstart', (e) => {
-                if (e.touches.length === 1) {
-                    handlePointerStart(e.touches[0].clientX, e.touches[0].clientY);
-                } else if (e.touches.length === 2 && isPanningCustomerPhoto) {
-                    const res = getTouchDistanceAndAngle(e);
-                    initialTouchDistance = res.dist;
-                    initialTouchAngle = res.angle;
-                }
-            }, { passive: true });
-
-            container.addEventListener('touchmove', (e) => {
                 if (!isPanningCustomerPhoto) return;
+                const coords = getCanvasCoords(e);
+                const dx = coords.x - panStartX;
+                const dy = coords.y - panStartY;
 
-                if (e.touches.length === 1) {
-                    const dx = e.touches[0].clientX - panStartX;
-                    const dy = e.touches[0].clientY - panStartY;
-                    const rect = container.getBoundingClientRect();
-                    const scaleFactor = BASE_WIDTH / rect.width;
+                customerSlotData[activeCustomerSlotIndex].xOffset = initialSlotXOffset + dx;
+                customerSlotData[activeCustomerSlotIndex].yOffset = initialSlotYOffset + dy;
 
-                    const data = customerSlotData[activeCustomerSlotIndex];
-                    if (data) {
-                        data.xOffset = initialSlotXOffset + (dx * scaleFactor);
-                        data.yOffset = initialSlotYOffset + (dy * scaleFactor);
-                        drawCustomerMainCanvas();
-                    }
-                } else if (e.touches.length === 2) {
-                    const res = getTouchDistanceAndAngle(e);
-                    const scaleChange = res.dist / initialTouchDistance;
-                    const angleChange = res.angle - initialTouchAngle;
+                drawCustomerMainCanvas();
+            }
 
-                    const data = customerSlotData[activeCustomerSlotIndex];
-                    if (data) {
-                        data.scale = Math.max(0.2, Math.min(4, initialPhotoScale * scaleChange));
-                        data.rotation = Math.round(initialPhotoRotation + angleChange);
-                        renderCustomerSlotAdjustControls();
-                        drawCustomerMainCanvas();
-                    }
-                }
-            }, { passive: true });
+            function handleEnd() {
+                isPanningCustomerPhoto = false;
+                initialTouchDistance = 0;
+            }
 
-            container.addEventListener('touchend', () => { isPanningCustomerPhoto = false; });
+            container.addEventListener('mousedown', handleStart);
+            window.addEventListener('mousemove', handleMove);
+            window.addEventListener('mouseup', handleEnd);
+
+            container.addEventListener('touchstart', handleStart, { passive: true });
+            window.addEventListener('touchmove', handleMove, { passive: true });
+            window.addEventListener('touchend', handleEnd);
         }
 
         function downloadHighResImage() {
             const canvas = document.getElementById('mainRenderCanvas');
-            const currentTpl = templates[activeTemplateIndex];
-            const fileName = `037Cafe_PhotoBooth_${currentTpl ? currentTpl.name : 'Image'}.png`;
-
+            if (!canvas) return;
             const link = document.createElement('a');
-            link.download = fileName;
-            link.href = canvas.toDataURL('image/png', 1.0);
+            link.download = `photo-booth-${Date.now()}.png`;
+            link.href = canvas.toDataURL('image/png');
             link.click();
         }
 
@@ -2328,61 +2317,76 @@
             const phone = document.getElementById('custPhone').value.trim();
             const qty = parseInt(document.getElementById('custQuantity').value) || 1;
 
-            if (!nickname || !phone) {
-                alert('กรุณากรอกชื่อและเบอร์โทรศัพท์ให้ครบถ้วน');
+            if (!nickname) {
+                alert('กรุณากรอกชื่อลูกค้า / ชื่อเล่น');
                 return;
             }
+            if (!phone) {
+                alert('กรุณากรอกเบอร์โทรศัพท์');
+                return;
+            }
+
+            let validCount = 0;
+            let usedCouponsList = [];
 
             for (let i = 0; i < qty; i++) {
                 const code = customerEnteredCoupons[i] || '';
                 const isVerified = verifiedCouponIndexes[i];
-                const val = validateSingleCoupon(code, i);
+                const validation = validateSingleCoupon(code, i);
 
-                if (!code || !isVerified || !val.isValid) {
-                    alert(`กรุณากรอกและกด "ตรวจสอบ" โค้ดที่ ${i + 1} ให้ถูกต้องก่อนส่งสั่งพิมพ์`);
-                    return;
+                if (code && isVerified && validation.isValid) {
+                    validCount++;
+                    usedCouponsList.push(code);
                 }
             }
 
-            const currentTpl = templates[activeTemplateIndex];
-            const orderNo = 'ORD-' + Math.floor(100000 + Math.random() * 900000);
+            if (validCount < qty) {
+                alert(`กรุณากรอกและกด "ตรวจสอบ" โค้ดให้ครบทั้งหมด ${qty} ช่องโค้ด ก่อนสั่งพิมพ์รูป`);
+                return;
+            }
 
-            for (let i = 0; i < qty; i++) {
-                const code = customerEnteredCoupons[i];
-                const found = activeCoupons.find(c => c.code && c.code.toUpperCase() === code.toUpperCase());
+            const btnSubmit = document.getElementById('btnSubmitOrder');
+            btnSubmit.disabled = true;
+            btnSubmit.innerHTML = `<i class="fa-solid fa-spinner fa-spin"></i> กำลังส่งคำสั่งสั่งพิมพ์...`;
+
+            // ตัดสิทธิ์โค้ดส่วนลดที่ใช้
+            usedCouponsList.forEach(code => {
+                const found = activeCoupons.find(c => c.code && c.code.toUpperCase() === code);
                 if (found) {
                     found.usedCount = (found.usedCount || 0) + 1;
                 }
-            }
+            });
+
             await updateCloudSettings({ activeCoupons: activeCoupons });
+
+            const currentTpl = templates[activeTemplateIndex];
+            const orderNo = `ORD-${Date.now().toString().slice(-6)}`;
 
             document.getElementById('recName').innerText = nickname;
             document.getElementById('recPhone').innerText = phone;
-            document.getElementById('recTemplate').innerText = currentTpl ? currentTpl.name : '-';
+            document.getElementById('recTemplate').innerText = currentTpl ? currentTpl.name : 'กรอบรูปโฟโต้บูธ';
             document.getElementById('recQuantity').innerText = `${qty} ใบ`;
-            document.getElementById('recCoupons').innerText = customerEnteredCoupons.join(', ');
+            document.getElementById('recCoupons').innerText = usedCouponsList.join(', ');
             document.getElementById('recOrderNo').innerText = orderNo;
 
+            const syncStatusEl = document.getElementById('googleSheetSyncStatus');
+            syncStatusEl.className = "text-[11px] text-amber-600 flex items-center justify-center gap-1.5 font-medium";
+            syncStatusEl.innerHTML = `<i class="fa-solid fa-spinner fa-spin"></i> กำลังส่งข้อมูลไปยัง Google Sheet และ LINE...`;
+
             document.getElementById('receiptModal').classList.remove('hidden');
-
-            const syncStatus = document.getElementById('googleSheetSyncStatus');
-            syncStatus.innerHTML = `<i class="fa-solid fa-spinner fa-spin text-sky-500"></i> กำลังอัปโหลดรูปขึ้น Google Drive และบันทึกข้อมูล...`;
-
-            const canvas = document.getElementById('mainRenderCanvas');
-            const imageBase64 = canvas.toDataURL('image/jpeg', 0.85);
 
             if (googleSheetScriptUrl) {
                 try {
                     const payload = {
                         action: 'saveOrder',
-                        orderNo: orderNo,
-                        customerName: nickname,
-                        phone: phone,
-                        templateName: currentTpl ? currentTpl.name : 'General',
-                        quantity: qty,
-                        coupons: customerEnteredCoupons.join(', '),
-                        imageBase64: imageBase64,
-                        timestamp: new Date().toLocaleString('th-TH')
+                        data: {
+                            orderNo: orderNo,
+                            name: nickname,
+                            phone: phone,
+                            templateName: currentTpl ? currentTpl.name : 'กรอบรูปโฟโต้บูธ',
+                            quantity: qty,
+                            coupons: usedCouponsList
+                        }
                     };
 
                     const response = await fetch(googleSheetScriptUrl, {
@@ -2392,19 +2396,24 @@
                     });
 
                     const resJson = await response.json();
-
                     if (resJson && resJson.status === 'success') {
-                        syncStatus.innerHTML = `<span class="text-emerald-600 font-bold"><i class="fa-solid fa-cloud-check"></i> บันทึกลิงก์ Google Drive ลง Google Sheet สำเร็จ!</span>`;
+                        syncStatusEl.className = "text-[11px] text-emerald-600 flex items-center justify-center gap-1.5 font-medium";
+                        syncStatusEl.innerHTML = `<i class="fa-solid fa-circle-check"></i> บันทึกข้อมูลลง Google Sheet และส่ง LINE สำเร็จ!`;
                     } else {
-                        syncStatus.innerHTML = `<span class="text-amber-600"><i class="fa-solid fa-triangle-exclamation"></i> บันทึกข้อมูลสำเร็จ (ไม่สามารถอัปโหลดรูปได้)</span>`;
+                        throw new Error(resJson.message || 'ส่งข้อมูลไม่สำเร็จ');
                     }
-                } catch (e) {
-                    console.error("GSheet Sync Error:", e);
-                    syncStatus.innerHTML = `<span class="text-rose-500"><i class="fa-solid fa-circle-xmark"></i> การเชื่อมต่อ Google Sheet ขัดข้อง</span>`;
+                } catch (err) {
+                    console.error("Order Sync Error:", err);
+                    syncStatusEl.className = "text-[11px] text-rose-500 flex items-center justify-center gap-1.5 font-medium";
+                    syncStatusEl.innerHTML = `<i class="fa-solid fa-triangle-exclamation"></i> บันทึกข้อมูลไม่สำเร็จ แต่ทำรายการแล้ว`;
                 }
             } else {
-                syncStatus.innerHTML = `<span class="text-amber-600"><i class="fa-solid fa-info-circle"></i> ยังไม่ได้ตั้งค่า Web App URL</span>`;
+                syncStatusEl.className = "text-[11px] text-slate-400 flex items-center justify-center gap-1.5 font-medium";
+                syncStatusEl.innerHTML = `ไม่ได้ตั้งค่า Google Sheet Web App URL`;
             }
+
+            btnSubmit.disabled = false;
+            btnSubmit.innerHTML = `<i class="fa-solid fa-print"></i> ยืนยันการสั่งพิมพ์รูป`;
         }
 
         function closeReceiptModal() {

@@ -608,7 +608,7 @@
             <div class="lg:col-span-7 space-y-4 flex flex-col items-center">
                 <div class="bg-white p-4 rounded-3xl border border-sky-100 pastel-shadow w-full flex flex-col items-center sticky top-20">
                     <div class="flex items-center justify-between w-full mb-3 px-2">
-                        <span class="text-xs font-semibold text-slate-500">
+                        <span id="previewHeaderTitle" class="text-xs font-semibold text-slate-500">
                             <i class="fa-solid fa-eye text-sky-400 mr-1"></i>
                             ตัวอย่างกรอบรูปของคุณ (แตะหรือลากรูปในกรอบเพื่อปรับย้าย/หมุน/ขยาย)
                         </span>
@@ -619,7 +619,15 @@
                         <canvas id="mainRenderCanvas" width="2400" height="3600" class="w-full h-full object-contain"></canvas>
                     </div>
 
-                    <div class="w-full mt-4">
+                    <div class="w-full mt-3 flex items-center justify-between px-2 text-xs">
+                        <label class="inline-flex items-center cursor-pointer select-none">
+                            <input type="checkbox" id="toggleOutlinesCheckbox" onchange="toggleSlotOutlines(this.checked)" class="sr-only peer">
+                            <div class="w-9 h-5 bg-slate-200 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-slate-300 after:border after:rounded-full after:h-4 after:w-4 after:transition-all peer-checked:bg-sky-500 relative"></div>
+                            <span class="ml-2 text-slate-600 font-medium text-[11px]"><i class="fa-solid fa-vector-square text-sky-500 mr-1"></i>แสดงขอบเขตช่องรูป</span>
+                        </label>
+                    </div>
+
+                    <div class="w-full mt-3">
                         <button id="btnNextStepPreviewBottom" onclick="handlePreviewBottomNextStep()" class="w-full py-3 bg-gradient-to-r from-sky-500 to-blue-600 hover:from-sky-600 hover:to-blue-700 text-white text-xs font-bold rounded-2xl shadow-lg transition flex items-center justify-center gap-2 active:scale-98 touch-manipulation">
                             <span>ถัดไป: ไปยังขั้นตอนถัดไป</span>
                             <i class="fa-solid fa-circle-arrow-right text-sm"></i>
@@ -727,6 +735,7 @@
         let activeStaffSlotIndex = 0;
         let activeCustomerSlotIndex = 0;
         let activeCategoryFilter = 'ALL';
+        let showSlotOutlines = false;
 
         let googleSheetScriptUrl = localStorage.getItem('037_gsheet_url') || DEFAULT_GSHEET_URL;
 
@@ -772,6 +781,11 @@
             setupInteractiveCanvasControls();
         };
 
+        function toggleSlotOutlines(checked) {
+            showSlotOutlines = checked;
+            drawCustomerMainCanvas();
+        }
+
         function enableDownloadButton() {
             isDownloadAllowed = true;
             const btn = document.getElementById('btnDownloadImage');
@@ -808,7 +822,6 @@
             if (modal) modal.classList.add('hidden');
         }
 
-        // ปรับแก้ฟังก์ชันดาวน์โหลดรูปภาพให้ปลอดภัยจาก CORS และรองรับอุปกรณ์ทุกชนิด
         function downloadHighResImage() {
             if (!isDownloadAllowed) {
                 alert('สงวนสิทธิ์การดาวน์โหลดรูปภาพ! คุณต้องยืนยันการสั่งพิมพ์เรียบร้อยก่อนจึงจะสามารถดาวน์โหลดรูปได้ครับ');
@@ -819,13 +832,11 @@
             if (!mainCanvas) return;
 
             try {
-                // พยายามแปลง DataURL โดยตรงจาก Canvas หลัก
                 let imageURI = mainCanvas.toDataURL("image/png");
                 triggerDownloadLink(imageURI);
             } catch (err) {
                 console.warn("Canvas is tainted, attempting safe render fallback...", err);
                 
-                // หากเกิดปัญหา Tainted Canvas สคริปต์จะวาดองค์ประกอบรูปถ่ายลง Canvas สำรองให้อัตโนมัติ
                 try {
                     const tempCanvas = document.createElement('canvas');
                     tempCanvas.width = BASE_WIDTH;
@@ -882,7 +893,6 @@
             }
         }
 
-        // ฟังก์ชันช่วยจัดการลิงก์ดาวน์โหลด
         function triggerDownloadLink(uri) {
             const fileName = `037Cafe_PhotoBooth_${Date.now()}.png`;
             const link = document.createElement('a');
@@ -894,7 +904,6 @@
             link.click();
             document.body.removeChild(link);
 
-            // รองรับฟอลแบ็กสำหรับ iOS Safari หรือเบราว์เซอร์มือถือที่บล็อกการคลิกลิงก์ Base64 อัตโนมัติ
             setTimeout(() => {
                 const win = window.open();
                 if (win) {
@@ -1105,6 +1114,24 @@
                     btnBottom.classList.add('hidden');
                 } else {
                     btnBottom.classList.remove('hidden');
+                }
+            }
+
+            const headerTitle = document.getElementById('previewHeaderTitle');
+            const canvasContainer = document.getElementById('customerCanvasContainer');
+            if (headerTitle) {
+                if (stepNum === 3) {
+                    headerTitle.innerHTML = `<i class="fa-solid fa-eye text-sky-400 mr-1"></i> ตัวอย่างกรอบรูปของคุณ (แตะหรือลากรูปในกรอบเพื่อปรับย้าย/หมุน/ขยาย)`;
+                } else {
+                    headerTitle.innerHTML = `<i class="fa-solid fa-eye text-sky-400 mr-1"></i> ตัวอย่างกรอบรูปของคุณ`;
+                }
+            }
+
+            if (canvasContainer) {
+                if (stepNum === 3) {
+                    canvasContainer.className = "relative bg-white rounded-xl shadow-lg overflow-hidden border border-sky-100 select-none cursor-grab active:cursor-grabbing touch-none";
+                } else {
+                    canvasContainer.className = "relative bg-white rounded-xl shadow-lg overflow-hidden border border-sky-100 select-none cursor-default touch-none";
                 }
             }
 
@@ -1327,6 +1354,10 @@
         }
 
         function triggerFileInputForActiveSlot() {
+            if (currentStep !== 3) {
+                alert('หากต้องการเปลี่ยนรูปหรือปรับยืดหดภาพ กรุณาย้อนกลับไปทำในขั้นตอนที่ 3 ครับ');
+                return;
+            }
             document.getElementById('globalSlotFileInput').click();
         }
 
@@ -1400,6 +1431,10 @@
         }
 
         function assignPhotoToCurrentActiveSlot(imgObj) {
+            if (currentStep !== 3) {
+                alert('หากต้องการเปลี่ยนรูปหรือปรับยืดหดภาพ กรุณาย้อนกลับไปทำในขั้นตอนที่ 3 ครับ');
+                return;
+            }
             if (!customerSlotData[activeCustomerSlotIndex]) {
                 customerSlotData[activeCustomerSlotIndex] = { img: null, xOffset: 0, yOffset: 0, scale: 1, rotation: 0 };
             }
@@ -2253,6 +2288,10 @@
         }
 
         function updateCustomerPhotoTransformFromInputs() {
+            if (currentStep !== 3) {
+                alert('หากต้องการเปลี่ยนรูปหรือปรับยืดหดภาพ กรุณาย้อนกลับไปทำในขั้นตอนที่ 3 ครับ');
+                return;
+            }
             if (!customerSlotData[activeCustomerSlotIndex]) {
                 customerSlotData[activeCustomerSlotIndex] = { img: null, xOffset: 0, yOffset: 0, scale: 1, rotation: 0 };
             }
@@ -2265,6 +2304,10 @@
         }
 
         function resetActiveCustomerPhotoTransform() {
+            if (currentStep !== 3) {
+                alert('หากต้องการเปลี่ยนรูปหรือปรับยืดหดภาพ กรุณาย้อนกลับไปทำในขั้นตอนที่ 3 ครับ');
+                return;
+            }
             if (customerSlotData[activeCustomerSlotIndex]) {
                 customerSlotData[activeCustomerSlotIndex].xOffset = 0;
                 customerSlotData[activeCustomerSlotIndex].yOffset = 0;
@@ -2350,6 +2393,46 @@
             if (currentTpl && currentTpl.id && loadedBgImages[currentTpl.id]) {
                 ctx.drawImage(loadedBgImages[currentTpl.id], 0, 0, BASE_WIDTH, BASE_HEIGHT);
             }
+
+            // แสดงขอบเขตของช่องรูป (Slot Outline Overlay) หากเปิดใช้งาน หรืออยู่ในขั้นตอนที่ 3 เพื่อให้เห็นชัดเจน
+            if (showSlotOutlines && currentTpl && currentTpl.slots) {
+                currentTpl.slots.forEach((s, idx) => {
+                    ctx.save();
+                    ctx.translate(s.x + s.w / 2, s.y + s.h / 2);
+                    ctx.rotate((s.rotation || 0) * Math.PI / 180);
+
+                    const r = s.radius || 0;
+                    const w = s.w, h = s.h;
+
+                    ctx.lineWidth = 10;
+                    ctx.strokeStyle = idx === activeCustomerSlotIndex ? '#0284C7' : '#94A3B8';
+                    ctx.setLineDash([20, 10]);
+
+                    ctx.beginPath();
+                    if (r > 0) {
+                        ctx.moveTo(-w / 2 + r, -h / 2);
+                        ctx.arcTo(w / 2, -h / 2, w / 2, h / 2, r);
+                        ctx.arcTo(w / 2, h / 2, -w / 2, h / 2, r);
+                        ctx.arcTo(-w / 2, h / 2, -w / 2, -h / 2, r);
+                        ctx.arcTo(-w / 2, -h / 2, w / 2, -h / 2, r);
+                    } else {
+                        ctx.rect(-w / 2, -h / 2, w, h);
+                    }
+                    ctx.closePath();
+                    ctx.stroke();
+
+                    // แสดง Badge เลขช่อง
+                    ctx.fillStyle = idx === activeCustomerSlotIndex ? '#0284C7' : '#64748B';
+                    ctx.fillRect(-w / 2 + 10, -h / 2 + 10, 140, 50);
+                    ctx.fillStyle = '#FFFFFF';
+                    ctx.font = 'bold 28px Prompt, sans-serif';
+                    ctx.textAlign = 'center';
+                    ctx.textBaseline = 'middle';
+                    ctx.fillText(`Slot #${idx + 1}`, -w / 2 + 80, -h / 2 + 35);
+
+                    ctx.restore();
+                });
+            }
         }
 
         function setupInteractiveCanvasControls() {
@@ -2368,6 +2451,11 @@
             };
 
             const startPan = (clientX, clientY) => {
+                if (currentStep !== 3) {
+                    alert('หากต้องการเปลี่ยนรูปหรือปรับยืดหดภาพ กรุณาย้อนกลับไปทำในขั้นตอนที่ 3 ครับ');
+                    return;
+                }
+
                 isPanningCustomerPhoto = true;
                 panStartX = clientX;
                 panStartY = clientY;
@@ -2381,7 +2469,7 @@
             };
 
             const movePan = (clientX, clientY) => {
-                if (!isPanningCustomerPhoto) return;
+                if (!isPanningCustomerPhoto || currentStep !== 3) return;
                 const rect = container.getBoundingClientRect();
                 const scaleFactor = BASE_WIDTH / rect.width;
 
@@ -2405,6 +2493,11 @@
             window.addEventListener('mouseup', endPan);
 
             container.addEventListener('touchstart', (e) => {
+                if (currentStep !== 3) {
+                    alert('หากต้องการเปลี่ยนรูปหรือปรับยืดหดภาพ กรุณาย้อนกลับไปทำในขั้นตอนที่ 3 ครับ');
+                    return;
+                }
+
                 if (e.touches.length === 1) {
                     startPan(e.touches[0].clientX, e.touches[0].clientY);
                 } else if (e.touches.length === 2) {
@@ -2422,6 +2515,8 @@
             }, { passive: false });
 
             container.addEventListener('touchmove', (e) => {
+                if (currentStep !== 3) return;
+
                 if (e.touches.length === 1 && isPanningCustomerPhoto) {
                     e.preventDefault();
                     movePan(e.touches[0].clientX, e.touches[0].clientY);
@@ -2497,10 +2592,8 @@
 
             document.getElementById('receiptModal').classList.remove('hidden');
 
-            // ปลดล็อกปุ่มดาวน์โหลดรูปภาพ หลังยืนยันสั่งพิมพ์เรียบร้อย
             enableDownloadButton();
 
-            // แสดงป๊อปอัปแจ้งเตือนสิทธิ์ดาวน์โหลดรูปภาพ
             setTimeout(() => {
                 openDownloadModal();
             }, 600);

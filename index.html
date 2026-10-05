@@ -226,8 +226,8 @@
                         <div>
                             <label class="block text-[11px] font-semibold text-slate-600 mb-1">หมวดหมู่กรอบรูป</label>
                             <select id="staffTemplateCategory" onchange="updateCurrentTemplateCategory()" class="w-full text-xs px-3 py-1.5 rounded-xl border border-sky-200 bg-white">
-                                <option value="เลือกกรอบใส่รูปส่งปริ้น (PhotoBooth มุมสูง)">1. เลือกกรอบใส่รูปส่งปริ้น (PhotoBooth มุมสูง)</option>
-                                <option value="เลือกกรอบใส่รูปส่งปริ้น (สตูดิโอและกิ๊ฟช็อป)">2. เลือกกรอบใส่รูปส่งปริ้น (สตูดิโอและกิ๊ฟช็อป)</option>
+                                <option value="PhotoBooth">1. PhotoBooth</option>
+                                <option value="สตูดิโอและกิ๊ฟช็อป">2. สตูดิโอและกิ๊ฟช็อป</option>
                             </select>
                         </div>
 
@@ -392,10 +392,10 @@
                         <button onclick="selectCategory('ALL')" id="catTab_ALL" class="px-3 py-1.5 rounded-xl text-xs font-semibold shrink-0 bg-sky-500 text-white shadow-sm transition">
                             ทั้งหมด
                         </button>
-                        <button onclick="selectCategory('เลือกกรอบใส่รูปส่งปริ้น (PhotoBooth มุมสูง)')" id="catTab_CAT1" class="px-3 py-1.5 rounded-xl text-xs font-semibold shrink-0 bg-slate-100 text-slate-600 hover:bg-sky-100 transition">
-                            PhotoBooth มุมสูง
+                        <button onclick="selectCategory('PhotoBooth')" id="catTab_CAT1" class="px-3 py-1.5 rounded-xl text-xs font-semibold shrink-0 bg-slate-100 text-slate-600 hover:bg-sky-100 transition">
+                            PhotoBooth
                         </button>
-                        <button onclick="selectCategory('เลือกกรอบใส่รูปส่งปริ้น (สตูดิโอและกิ๊ฟช็อป)')" id="catTab_CAT2" class="px-3 py-1.5 rounded-xl text-xs font-semibold shrink-0 bg-slate-100 text-slate-600 hover:bg-sky-100 transition">
+                        <button onclick="selectCategory('สตูดิโอและกิ๊ฟช็อป')" id="catTab_CAT2" class="px-3 py-1.5 rounded-xl text-xs font-semibold shrink-0 bg-slate-100 text-slate-600 hover:bg-sky-100 transition">
                             สตูดิโอและกิ๊ฟช็อป
                         </button>
                     </div>
@@ -608,10 +608,13 @@
             <div class="lg:col-span-7 space-y-4 flex flex-col items-center">
                 <div class="bg-white p-4 rounded-3xl border border-sky-100 pastel-shadow w-full flex flex-col items-center sticky top-20">
                     <div class="flex items-center justify-between w-full mb-3 px-2">
-                        <span class="text-xs font-semibold text-slate-500">
-                            <i class="fa-solid fa-eye text-sky-400 mr-1"></i>
-                            ตัวอย่างกรอบรูปของคุณ (แตะเพื่อเลือก Slot หรือลากย้ายรูปภาพ)
-                        </span>
+                        <div class="flex flex-col">
+                            <span class="text-xs font-semibold text-slate-500">
+                                <i class="fa-solid fa-eye text-sky-400 mr-1"></i>
+                                ตัวอย่างกรอบรูปของคุณ (แตะเพื่อเลือก Slot หรือลากย้ายรูปภาพ)
+                            </span>
+                            <span id="previewTemplateName" class="text-sm font-bold text-slate-800 mt-0.5">แบบกรอบรูป: -</span>
+                        </div>
                         <span class="text-xs bg-sky-100 text-sky-700 px-2.5 py-0.5 rounded-full font-bold">2400x3600 px</span>
                     </div>
 
@@ -1728,8 +1731,8 @@
             cat1Links.forEach((link, index) => {
                 templates.push({
                     id: `cat1_${index + 1}`,
-                    name: `มุมสูง แบบที่ ${index + 1}`,
-                    category: 'เลือกกรอบใส่รูปส่งปริ้น (PhotoBooth มุมสูง)',
+                    name: `PhotoBooth แบบที่ ${index + 1}`,
+                    category: 'PhotoBooth',
                     price: 120,
                     bgColor: '#EBF5FF',
                     driveUrl: link,
@@ -1742,7 +1745,7 @@
                 templates.push({
                     id: `cat2_${index + 1}`,
                     name: `สตูดิโอ แบบที่ ${index + 1}`,
-                    category: 'เลือกกรอบใส่รูปส่งปริ้น (สตูดิโอและกิ๊ฟช็อป)',
+                    category: 'สตูดิโอและกิ๊ฟช็อป',
                     price: 120,
                     bgColor: '#EBF5FF',
                     driveUrl: link,
@@ -1971,7 +1974,7 @@
             const newTpl = {
                 id: `tpl_${Date.now()}`,
                 name: `กรอบแบบใหม่ ${templates.length + 1}`,
-                category: 'เลือกกรอบใส่รูปส่งปริ้น (PhotoBooth มุมสูง)',
+                category: 'PhotoBooth',
                 price: 120,
                 bgColor: '#FFFFFF',
                 driveUrl: '',
@@ -2006,6 +2009,7 @@
             const val = document.getElementById('staffTemplateName').value;
             templates[activeTemplateIndex].name = val;
             renderStaffTemplateSelectorList();
+            renderCustomerView();
         }
 
         function updateCurrentTemplatePrice() {
@@ -2047,7 +2051,7 @@
 
             document.getElementById('staffTemplateName').value = currentTpl.name || '';
             document.getElementById('staffTemplatePrice').value = currentTpl.price || 0;
-            document.getElementById('staffTemplateCategory').value = currentTpl.category || 'เลือกกรอบใส่รูปส่งปริ้น (PhotoBooth มุมสูง)';
+            document.getElementById('staffTemplateCategory').value = currentTpl.category || 'PhotoBooth';
             document.getElementById('staffBgDriveUrl').value = currentTpl.driveUrl || '';
 
             const slots = currentTpl.slots || [];
@@ -2180,7 +2184,7 @@
 
             if (catName === 'ALL') {
                 document.getElementById('catTab_ALL').className = "px-3 py-1.5 rounded-xl text-xs font-semibold shrink-0 bg-sky-500 text-white shadow-sm transition";
-            } else if (catName.includes('มุมสูง')) {
+            } else if (catName === 'PhotoBooth') {
                 document.getElementById('catTab_CAT1').className = "px-3 py-1.5 rounded-xl text-xs font-semibold shrink-0 bg-sky-500 text-white shadow-sm transition";
             } else {
                 document.getElementById('catTab_CAT2').className = "px-3 py-1.5 rounded-xl text-xs font-semibold shrink-0 bg-sky-500 text-white shadow-sm transition";
@@ -2208,7 +2212,7 @@
                     activeTemplateIndex = realIdx;
                     activeCustomerSlotIndex = 0;
                     renderTemplateGrid();
-                    drawCustomerMainCanvas();
+                    renderCustomerView();
                 };
 
                 card.innerHTML = `
@@ -2223,6 +2227,12 @@
         }
 
         function renderCustomerView() {
+            const nameElem = document.getElementById('previewTemplateName');
+            const currentTpl = templates[activeTemplateIndex];
+            if (nameElem) {
+                nameElem.innerText = currentTpl ? `แบบกรอบรูป: ${currentTpl.name}` : 'แบบกรอบรูป: -';
+            }
+
             render15PhotosGallery();
             renderCustomerSlotAdjustControls();
             drawCustomerMainCanvas();

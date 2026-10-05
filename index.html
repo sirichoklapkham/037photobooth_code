@@ -594,8 +594,8 @@
                         <button onclick="goToStep(3)" class="py-3 px-4 bg-slate-100 hover:bg-slate-200 text-slate-600 text-xs font-bold rounded-2xl transition">
                             <i class="fa-solid fa-arrow-left"></i> ย้อนกลับ
                         </button>
-                        <button id="btnDownloadImage" onclick="handleDownloadButtonClick()" class="py-3 px-3 bg-slate-100 text-slate-400 text-xs font-bold rounded-2xl border border-slate-200 transition flex items-center justify-center gap-1.5 active:scale-98 touch-manipulation cursor-not-allowed">
-                            <i id="btnDownloadIcon" class="fa-solid fa-lock"></i> โหลดรูป
+                        <button id="btnDownloadImage" onclick="downloadHighResImage()" disabled class="py-3 px-3 bg-slate-200 text-slate-400 cursor-not-allowed text-xs font-bold rounded-2xl border border-slate-200 transition flex items-center justify-center gap-1.5 touch-manipulation">
+                            <i class="fa-solid fa-lock" id="downloadBtnIcon"></i> โหลดรูป
                         </button>
                         <button id="btnSubmitOrder" onclick="submitCustomerOrder()" class="flex-1 py-3 bg-gradient-to-r from-sky-400 to-blue-500 hover:from-sky-500 hover:to-blue-600 text-white text-xs font-bold rounded-2xl shadow-md transition flex items-center justify-center gap-1.5 active:scale-98 touch-manipulation">
                             <i class="fa-solid fa-print"></i> ยืนยันการสั่งพิมพ์รูป
@@ -670,14 +670,35 @@
             <div id="googleSheetSyncStatus" class="text-[11px] text-slate-500 flex items-center justify-center gap-1.5 font-medium"></div>
 
             <div class="pt-2">
-                <button onclick="downloadHighResImage()" class="w-full py-3 bg-emerald-500 hover:bg-emerald-600 text-white font-bold rounded-xl text-xs transition active:scale-98 touch-manipulation flex items-center justify-center gap-2 shadow-md">
-                    <i class="fa-solid fa-download text-sm"></i> ดาวน์โหลดรูปภาพความละเอียดสูง
+                <button onclick="downloadHighResImage(); closeReceiptModal();" class="w-full py-3 mb-2 bg-gradient-to-r from-emerald-400 to-teal-500 hover:from-emerald-500 hover:to-teal-600 text-white font-bold rounded-xl text-xs shadow-md transition flex items-center justify-center gap-2 active:scale-98 touch-manipulation">
+                    <i class="fa-solid fa-download"></i> ดาวน์โหลดรูปภาพความละเอียดสูง
+                </button>
+                <button onclick="closeReceiptModal()" class="w-full py-2.5 bg-slate-100 hover:bg-slate-200 text-slate-600 font-semibold rounded-xl text-xs transition active:scale-98 touch-manipulation">
+                    ปิดหน้าต่างนี้
                 </button>
             </div>
+        </div>
+    </div>
 
-            <button onclick="closeReceiptModal()" class="w-full py-2.5 bg-slate-100 hover:bg-slate-200 text-slate-600 font-semibold rounded-xl text-xs transition active:scale-98 touch-manipulation">
-                ปิดหน้าต่างนี้
-            </button>
+    <!-- Modal Download Ready Popup -->
+    <div id="downloadModal" class="fixed inset-0 bg-slate-900/50 backdrop-blur-sm z-50 hidden flex items-center justify-center p-4">
+        <div class="bg-white rounded-3xl max-w-sm w-full p-6 text-center space-y-4 shadow-2xl border border-sky-100">
+            <div class="w-16 h-16 bg-sky-100 text-sky-500 rounded-full flex items-center justify-center mx-auto text-3xl">
+                <i class="fa-solid fa-cloud-arrow-down"></i>
+            </div>
+            <div>
+                <h3 class="text-base font-bold text-slate-800">ดาวน์โหลดรูปภาพ</h3>
+                <p class="text-xs text-slate-500 mt-1">การชำระเงินได้รับการยืนยันแล้ว สามารถดาวน์โหลดรูปต้นฉบับคมชัดได้เลยค่ะ</p>
+            </div>
+
+            <div class="space-y-2 pt-2">
+                <button onclick="downloadHighResImage(); closeDownloadModal();" class="w-full py-3 bg-gradient-to-r from-sky-400 to-blue-500 hover:from-sky-500 hover:to-blue-600 text-white font-bold rounded-xl text-xs shadow-md transition flex items-center justify-center gap-2 active:scale-98 touch-manipulation">
+                    <i class="fa-solid fa-download"></i> ดาวน์โหลดรูปตอนนี้
+                </button>
+                <button onclick="closeDownloadModal()" class="w-full py-2 bg-slate-100 hover:bg-slate-200 text-slate-600 font-semibold rounded-xl text-xs transition active:scale-98 touch-manipulation">
+                    ไว้ดาวน์โหลดทีหลัง
+                </button>
+            </div>
         </div>
     </div>
 
@@ -694,14 +715,12 @@
     <script>
         const BASE_WIDTH = 2400;
         const BASE_HEIGHT = 3600;
-        const DEFAULT_GSHEET_URL = 'https://script.google.com/macros/s/AKfycbxsFUF75OAZXAOWJTR1od_eokIzPyjkDeSbvuF2wpCmgxH9OqPaP5ARVOl-WNh1fyVyKQ/exec';
+        const DEFAULT_GSHEET_URL = 'https://script.google.com/macros/s/AKfycbw4NQp2Kn-4kFcQD9gJsH_CSIu-iuX2EcQgvN0364Xg7oqAJaSP1eCF1Tv-w7OgAeM42w/exec';
 
         let currentMode = 'customer';
         let currentStep = 1;
         let secretHeaderClickCount = 0;
         let secretClickTimer = null;
-
-        let isPaymentConfirmed = false;
 
         let templates = [];
         let activeTemplateIndex = 0;
@@ -743,39 +762,68 @@
         let stopCaptureRequested = false;
         let isCameraMirrored = true;
 
+        // สถาณะล็อกสิทธิ์การดาวน์โหลด
+        let isDownloadAllowed = false;
+
         window.onload = function() {
             const urlInput = document.getElementById('googleSheetUrlInput');
             if (urlInput) urlInput.value = googleSheetScriptUrl;
             initCloudSettingsListener();
             setupInteractiveCanvasControls();
-            updateDownloadButtonState();
         };
 
-        function updateDownloadButtonState() {
+        function enableDownloadButton() {
+            isDownloadAllowed = true;
             const btn = document.getElementById('btnDownloadImage');
-            const icon = document.getElementById('btnDownloadIcon');
-            if (!btn || !icon) return;
+            const icon = document.getElementById('downloadBtnIcon');
+            if (btn) {
+                btn.disabled = false;
+                btn.className = "py-3 px-3 bg-emerald-50 hover:bg-emerald-100 text-emerald-700 text-xs font-bold rounded-2xl border border-emerald-300 transition flex items-center justify-center gap-1.5 active:scale-98 touch-manipulation shadow-xs";
+            }
+            if (icon) {
+                icon.className = "fa-solid fa-download text-emerald-600";
+            }
+        }
 
-            if (isPaymentConfirmed) {
-                btn.className = "py-3 px-3 bg-emerald-500 hover:bg-emerald-600 text-white text-xs font-bold rounded-2xl shadow-md transition flex items-center justify-center gap-1.5 active:scale-98 touch-manipulation cursor-pointer";
-                icon.className = "fa-solid fa-download";
-            } else {
-                btn.className = "py-3 px-3 bg-slate-100 text-slate-400 text-xs font-bold rounded-2xl border border-slate-200 transition flex items-center justify-center gap-1.5 active:scale-98 touch-manipulation cursor-not-allowed";
+        function disableDownloadButton() {
+            isDownloadAllowed = false;
+            const btn = document.getElementById('btnDownloadImage');
+            const icon = document.getElementById('downloadBtnIcon');
+            if (btn) {
+                btn.disabled = true;
+                btn.className = "py-3 px-3 bg-slate-200 text-slate-400 cursor-not-allowed text-xs font-bold rounded-2xl border border-slate-200 transition flex items-center justify-center gap-1.5 touch-manipulation";
+            }
+            if (icon) {
                 icon.className = "fa-solid fa-lock";
             }
         }
 
-        function handleDownloadButtonClick() {
-            if (!isPaymentConfirmed) {
-                alert("ดาวน์โหลดได้หลังยืนยันการชำระเงินสั่งปริ้นรูปแล้วเท่านั้น");
-                return;
-            }
-            downloadHighResImage();
+        function openDownloadModal() {
+            const modal = document.getElementById('downloadModal');
+            if (modal) modal.classList.remove('hidden');
         }
 
-        function unlockDownloadButton() {
-            isPaymentConfirmed = true;
-            updateDownloadButtonState();
+        function closeDownloadModal() {
+            const modal = document.getElementById('downloadModal');
+            if (modal) modal.classList.add('hidden');
+        }
+
+        function downloadHighResImage() {
+            if (!isDownloadAllowed) {
+                alert('สงวนสิทธิ์การดาวน์โหลดรูปภาพ! คุณต้องยืนยันการสั่งพิมพ์เรียบร้อยก่อนจึงจะสามารถดาวน์โหลดรูปได้ครับ');
+                return;
+            }
+
+            const canvas = document.getElementById('mainRenderCanvas');
+            if (!canvas) return;
+
+            const imageURI = canvas.toDataURL("image/png");
+            const link = document.createElement('a');
+            link.download = `037Cafe_PhotoBooth_${Date.now()}.png`;
+            link.href = imageURI;
+            document.body.appendChild(link);
+            link.click();
+            document.body.removeChild(link);
         }
 
         function saveGoogleSheetUrl() {
@@ -985,7 +1033,10 @@
 
             if (stepNum === 2) renderTemplateGrid();
             if (stepNum === 3) startWebcamStream(); else stopWebcamStream();
-            if (stepNum === 4) renderCouponInputs();
+            if (stepNum === 4) {
+                disableDownloadButton(); // รีเซ็ตการล็อกการดาวน์โหลดหากเข้ามาที่ขั้นตอน 4
+                renderCouponInputs();
+            }
             
             drawCustomerMainCanvas();
             window.scrollTo({ top: 0, behavior: 'smooth' });
@@ -2193,8 +2244,7 @@
 
                         const imgAspect = data.img.width / data.img.height;
                         const slotAspect = w / h;
-                        let drawW = w;
-                        let drawH = h;
+                        let drawW, drawH;
 
                         if (imgAspect > slotAspect) {
                             drawH = h;
@@ -2207,12 +2257,12 @@
                         ctx.drawImage(data.img, -drawW / 2, -drawH / 2, drawW, drawH);
                         ctx.restore();
                     } else {
-                        ctx.fillStyle = "#E2E8F0";
+                        ctx.fillStyle = '#F1F5F9';
                         ctx.fillRect(-w / 2, -h / 2, w, h);
-                        ctx.fillStyle = "#94A3B8";
-                        ctx.font = "bold 40px Prompt";
-                        ctx.textAlign = "center";
-                        ctx.textBaseline = "middle";
+                        ctx.fillStyle = '#94A3B8';
+                        ctx.font = 'bold 36px Prompt, sans-serif';
+                        ctx.textAlign = 'center';
+                        ctx.textBaseline = 'middle';
                         ctx.fillText(`Slot #${idx + 1}`, 0, 0);
                     }
 
@@ -2229,42 +2279,21 @@
             const container = document.getElementById('customerCanvasContainer');
             if (!container) return;
 
-            container.addEventListener('mousedown', handlePointerDown);
-            window.addEventListener('mousemove', handlePointerMove);
-            window.addEventListener('mouseup', handlePointerUp);
+            const getTouchDistanceAndAngle = (e) => {
+                const t1 = e.touches[0];
+                const t2 = e.touches[1];
+                const dx = t2.clientX - t1.clientX;
+                const dy = t2.clientY - t1.clientY;
+                return {
+                    dist: Math.sqrt(dx * dx + dy * dy),
+                    angle: Math.atan2(dy, dx) * 180 / Math.PI
+                };
+            };
 
-            container.addEventListener('touchstart', handleTouchStart, { passive: false });
-            window.addEventListener('touchmove', handleTouchMove, { passive: false });
-            window.addEventListener('touchend', handleTouchEnd);
-        }
-
-        function handlePointerDown(e) {
-            if (currentMode !== 'customer') return;
-            const currentTpl = templates[activeTemplateIndex];
-            if (!currentTpl || !currentTpl.slots) return;
-
-            const rect = e.currentTarget.getBoundingClientRect();
-            const scaleX = BASE_WIDTH / rect.width;
-            const scaleY = BASE_HEIGHT / rect.height;
-            const clickX = (e.clientX - rect.left) * scaleX;
-            const clickY = (e.clientY - rect.top) * scaleY;
-
-            let clickedSlotIdx = -1;
-            for (let i = currentTpl.slots.length - 1; i >= 0; i--) {
-                const s = currentTpl.slots[i];
-                if (clickX >= s.x && clickX <= s.x + s.w && clickY >= s.y && clickY <= s.y + s.h) {
-                    clickedSlotIdx = i;
-                    break;
-                }
-            }
-
-            if (clickedSlotIdx !== -1) {
-                activeCustomerSlotIndex = clickedSlotIdx;
-                renderCustomerSlotAdjustControls();
-
+            const startPan = (clientX, clientY) => {
                 isPanningCustomerPhoto = true;
-                panStartX = e.clientX;
-                panStartY = e.clientY;
+                panStartX = clientX;
+                panStartY = clientY;
 
                 if (!customerSlotData[activeCustomerSlotIndex]) {
                     customerSlotData[activeCustomerSlotIndex] = { img: null, xOffset: 0, yOffset: 0, scale: 1, rotation: 0 };
@@ -2272,99 +2301,15 @@
 
                 initialSlotXOffset = customerSlotData[activeCustomerSlotIndex].xOffset || 0;
                 initialSlotYOffset = customerSlotData[activeCustomerSlotIndex].yOffset || 0;
-            }
-        }
+            };
 
-        function handlePointerMove(e) {
-            if (!isPanningCustomerPhoto || currentMode !== 'customer') return;
-
-            const container = document.getElementById('customerCanvasContainer');
-            const rect = container.getBoundingClientRect();
-            const scaleX = BASE_WIDTH / rect.width;
-
-            const dx = (e.clientX - panStartX) * scaleX;
-            const dy = (e.clientY - panStartY) * scaleX;
-
-            const activeData = customerSlotData[activeCustomerSlotIndex];
-            if (activeData) {
-                activeData.xOffset = initialSlotXOffset + dx;
-                activeData.yOffset = initialSlotYOffset + dy;
-                drawCustomerMainCanvas();
-            }
-        }
-
-        function handlePointerUp() {
-            isPanningCustomerPhoto = false;
-        }
-
-        function handleTouchStart(e) {
-            if (currentMode !== 'customer') return;
-            const container = document.getElementById('customerCanvasContainer');
-            const rect = container.getBoundingClientRect();
-
-            if (e.touches.length === 1) {
-                const touch = e.touches[0];
-                const scaleX = BASE_WIDTH / rect.width;
-                const scaleY = BASE_HEIGHT / rect.height;
-                const clickX = (touch.clientX - rect.left) * scaleX;
-                const clickY = (touch.clientY - rect.top) * scaleY;
-
-                const currentTpl = templates[activeTemplateIndex];
-                if (!currentTpl || !currentTpl.slots) return;
-
-                let clickedSlotIdx = -1;
-                for (let i = currentTpl.slots.length - 1; i >= 0; i--) {
-                    const s = currentTpl.slots[i];
-                    if (clickX >= s.x && clickX <= s.x + s.w && clickY >= s.y && clickY <= s.y + s.h) {
-                        clickedSlotIdx = i;
-                        break;
-                    }
-                }
-
-                if (clickedSlotIdx !== -1) {
-                    e.preventDefault();
-                    activeCustomerSlotIndex = clickedSlotIdx;
-                    renderCustomerSlotAdjustControls();
-
-                    isPanningCustomerPhoto = true;
-                    panStartX = touch.clientX;
-                    panStartY = touch.clientY;
-
-                    if (!customerSlotData[activeCustomerSlotIndex]) {
-                        customerSlotData[activeCustomerSlotIndex] = { img: null, xOffset: 0, yOffset: 0, scale: 1, rotation: 0 };
-                    }
-
-                    initialSlotXOffset = customerSlotData[activeCustomerSlotIndex].xOffset || 0;
-                    initialSlotYOffset = customerSlotData[activeCustomerSlotIndex].yOffset || 0;
-                }
-            } else if (e.touches.length === 2 && isPanningCustomerPhoto) {
-                e.preventDefault();
-                const t1 = e.touches[0];
-                const t2 = e.touches[1];
-
-                initialTouchDistance = Math.hypot(t2.clientX - t1.clientX, t2.clientY - t1.clientY);
-                initialTouchAngle = Math.atan2(t2.clientY - t1.clientY, t2.clientX - t1.clientX) * 180 / Math.PI;
-
-                const activeData = customerSlotData[activeCustomerSlotIndex];
-                if (activeData) {
-                    initialPhotoScale = activeData.scale || 1;
-                    initialPhotoRotation = activeData.rotation || 0;
-                }
-            }
-        }
-
-        function handleTouchMove(e) {
-            if (!isPanningCustomerPhoto || currentMode !== 'customer') return;
-
-            if (e.touches.length === 1) {
-                e.preventDefault();
-                const touch = e.touches[0];
-                const container = document.getElementById('customerCanvasContainer');
+            const movePan = (clientX, clientY) => {
+                if (!isPanningCustomerPhoto) return;
                 const rect = container.getBoundingClientRect();
-                const scaleX = BASE_WIDTH / rect.width;
+                const scaleFactor = BASE_WIDTH / rect.width;
 
-                const dx = (touch.clientX - panStartX) * scaleX;
-                const dy = (touch.clientY - panStartY) * scaleX;
+                const dx = (clientX - panStartX) * scaleFactor;
+                const dy = (clientY - panStartY) * scaleFactor;
 
                 const activeData = customerSlotData[activeCustomerSlotIndex];
                 if (activeData) {
@@ -2372,42 +2317,54 @@
                     activeData.yOffset = initialSlotYOffset + dy;
                     drawCustomerMainCanvas();
                 }
-            } else if (e.touches.length === 2) {
-                e.preventDefault();
-                const t1 = e.touches[0];
-                const t2 = e.touches[1];
+            };
 
-                const currentDistance = Math.hypot(t2.clientX - t1.clientX, t2.clientY - t1.clientY);
-                const currentAngle = Math.atan2(t2.clientY - t1.clientY, t2.clientX - t1.clientX) * 180 / Math.PI;
-
-                const scaleFactor = currentDistance / initialTouchDistance;
-                const angleDiff = currentAngle - initialTouchAngle;
-
-                const activeData = customerSlotData[activeCustomerSlotIndex];
-                if (activeData) {
-                    activeData.scale = Math.max(0.2, Math.min(4, initialPhotoScale * scaleFactor));
-                    activeData.rotation = Math.round(initialPhotoRotation + angleDiff);
-
-                    renderCustomerSlotAdjustControls();
-                    drawCustomerMainCanvas();
-                }
-            }
-        }
-
-        function handleTouchEnd(e) {
-            if (e.touches.length === 0) {
+            const endPan = () => {
                 isPanningCustomerPhoto = false;
-            }
-        }
+            };
 
-        function downloadHighResImage() {
-            const canvas = document.getElementById('mainRenderCanvas');
-            if (!canvas) return;
+            container.addEventListener('mousedown', (e) => startPan(e.clientX, e.clientY));
+            window.addEventListener('mousemove', (e) => movePan(e.clientX, e.clientY));
+            window.addEventListener('mouseup', endPan);
 
-            const link = document.createElement('a');
-            link.download = `PhotoBooth_037Cafe_${Date.now()}.png`;
-            link.href = canvas.toDataURL('image/png', 1.0);
-            link.click();
+            container.addEventListener('touchstart', (e) => {
+                if (e.touches.length === 1) {
+                    startPan(e.touches[0].clientX, e.touches[0].clientY);
+                } else if (e.touches.length === 2) {
+                    isPanningCustomerPhoto = false;
+                    const res = getTouchDistanceAndAngle(e);
+                    initialTouchDistance = res.dist;
+                    initialTouchAngle = res.angle;
+
+                    if (!customerSlotData[activeCustomerSlotIndex]) {
+                        customerSlotData[activeCustomerSlotIndex] = { img: null, xOffset: 0, yOffset: 0, scale: 1, rotation: 0 };
+                    }
+                    initialPhotoScale = customerSlotData[activeCustomerSlotIndex].scale || 1;
+                    initialPhotoRotation = customerSlotData[activeCustomerSlotIndex].rotation || 0;
+                }
+            }, { passive: false });
+
+            container.addEventListener('touchmove', (e) => {
+                if (e.touches.length === 1 && isPanningCustomerPhoto) {
+                    e.preventDefault();
+                    movePan(e.touches[0].clientX, e.touches[0].clientY);
+                } else if (e.touches.length === 2) {
+                    e.preventDefault();
+                    const res = getTouchDistanceAndAngle(e);
+                    const scaleChange = res.dist / initialTouchDistance;
+                    const angleChange = res.angle - initialTouchAngle;
+
+                    const activeData = customerSlotData[activeCustomerSlotIndex];
+                    if (activeData) {
+                        activeData.scale = Math.max(0.2, Math.min(4, initialPhotoScale * scaleChange));
+                        activeData.rotation = Math.round(initialPhotoRotation + angleChange);
+                        renderCustomerSlotAdjustControls();
+                        drawCustomerMainCanvas();
+                    }
+                }
+            }, { passive: false });
+
+            container.addEventListener('touchend', endPan);
         }
 
         async function submitCustomerOrder() {
@@ -2415,41 +2372,28 @@
             const phone = document.getElementById('custPhone').value.trim();
             const qty = parseInt(document.getElementById('custQuantity').value) || 1;
 
-            if (!nickname) {
-                alert('กรุณากรอกชื่อของคุณ');
-                document.getElementById('custNickname').focus();
+            if (!nickname || !phone) {
+                alert('กรุณากรอกชื่อลูกค้าและเบอร์โทรศัพท์ให้ครบถ้วน');
                 return;
             }
 
-            if (!phone) {
-                alert('กรุณากรอกเบอร์โทรศัพท์');
-                document.getElementById('custPhone').focus();
+            if (customerEnteredCoupons.length < qty) {
+                alert('กรุณากรอกโค้ดสั่งพิมพ์ให้ครบตามจำนวนใบ');
                 return;
             }
 
             for (let i = 0; i < qty; i++) {
-                const code = customerEnteredCoupons[i] || '';
-                const isVerified = verifiedCouponIndexes[i];
-                const validation = validateSingleCoupon(code, i);
-
-                if (!code) {
-                    alert(`กรุณากรอกโค้ดให้ครบตามจำนวนสั่งพิมพ์ (ใบที่ ${i + 1} ยังไม่ได้กรอก)`);
+                const c = customerEnteredCoupons[i];
+                if (!c) {
+                    alert(`กรุณากรอกโค้ดในช่องที่ ${i + 1}`);
                     return;
                 }
-
-                if (!isVerified) {
-                    alert(`กรุณากดปุ่ม "ตรวจสอบ" โค้ดใบที่ ${i + 1} (${code}) ก่อนกดยืนยันสั่งพิมพ์`);
-                    return;
-                }
-
-                if (!validation.isValid) {
-                    alert(`โค้ดใบที่ ${i + 1} (${code}) ไม่ถูกต้อง: ${validation.message}`);
+                const val = validateSingleCoupon(c, i);
+                if (!val.isValid) {
+                    alert(`โค้ดในช่องที่ ${i + 1} "${c}" ไม่ถูกต้อง: ${val.message}`);
                     return;
                 }
             }
-
-            const currentTpl = templates[activeTemplateIndex];
-            const orderNo = `ORD-${Math.floor(100000 + Math.random() * 900000)}`;
 
             for (let i = 0; i < qty; i++) {
                 const code = customerEnteredCoupons[i];
@@ -2461,70 +2405,63 @@
 
             await updateCloudSettings({ activeCoupons: activeCoupons });
 
+            const currentTpl = templates[activeTemplateIndex];
+            const orderNo = 'ORD-' + Math.floor(100000 + Math.random() * 900000);
+
             document.getElementById('recName').innerText = nickname;
             document.getElementById('recPhone').innerText = phone;
-            document.getElementById('recTemplate').innerText = currentTpl ? currentTpl.name : 'PhotoBooth';
+            document.getElementById('recTemplate').innerText = currentTpl ? currentTpl.name : '-';
             document.getElementById('recQuantity').innerText = `${qty} ใบ`;
             document.getElementById('recCoupons').innerText = customerEnteredCoupons.join(', ');
             document.getElementById('recOrderNo').innerText = orderNo;
 
-            unlockDownloadButton();
+            const syncStatus = document.getElementById('googleSheetSyncStatus');
+            syncStatus.innerHTML = '<i class="fa-solid fa-spinner fa-spin text-sky-500"></i> กำลังบันทึกรายการลง Google Sheet...';
 
             document.getElementById('receiptModal').classList.remove('hidden');
 
-            sendOrderToGoogleSheet(orderNo, nickname, phone, qty, currentTpl ? currentTpl.name : '');
-        }
+            // ✅ ปลดล็อกปุ่มดาวน์โหลดรูปภาพ หลังยืนยันการชำระเงินเรียบร้อย
+            enableDownloadButton();
 
-        async function sendOrderToGoogleSheet(orderNo, nickname, phone, qty, templateName) {
-            const syncStatus = document.getElementById('googleSheetSyncStatus');
-            if (syncStatus) {
-                syncStatus.innerHTML = `<i class="fa-solid fa-spinner fa-spin text-sky-500"></i> กำลังบันทึกข้อมูลและอัปโหลดรูปขึ้น Google Sheet...`;
-            }
+            // ✅ แสดงป๊อปอัปแจ้งเตือนสิทธิ์ดาวน์โหลดรูปภาพทันที
+            setTimeout(() => {
+                openDownloadModal();
+            }, 600);
 
-            if (!googleSheetScriptUrl) {
-                if (syncStatus) {
-                    syncStatus.innerHTML = `<span class="text-amber-600">⚠ ยังไม่ได้ตั้งค่า Google Sheet URL</span>`;
-                }
-                return;
-            }
-
-            try {
+            if (googleSheetScriptUrl) {
                 const canvas = document.getElementById('mainRenderCanvas');
-                const imageDataBase64 = canvas ? canvas.toDataURL('image/png', 0.9) : '';
+                const base64Image = canvas ? canvas.toDataURL('image/jpeg', 0.85) : '';
 
-                const payload = {
-                    action: 'submitOrder',
+                const orderData = {
+                    action: 'addOrder',
                     orderNo: orderNo,
-                    customerName: nickname,
+                    nickname: nickname,
                     phone: phone,
+                    templateName: currentTpl ? currentTpl.name : '',
                     quantity: qty,
-                    templateName: templateName,
-                    usedCoupons: customerEnteredCoupons.join(', '),
-                    timestamp: new Date().toLocaleString('th-TH'),
-                    photoBase64: imageDataBase64
+                    coupons: customerEnteredCoupons.join(', '),
+                    imageData: base64Image,
+                    timestamp: new Date().toLocaleString('th-TH')
                 };
 
-                const res = await fetch(googleSheetScriptUrl, {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'text/plain;charset=utf-8' },
-                    body: JSON.stringify(payload)
-                });
-
-                const json = await res.json();
-                if (json && json.status === 'success') {
-                    if (syncStatus) {
-                        syncStatus.innerHTML = `<span class="text-emerald-600"><i class="fa-solid fa-circle-check"></i> บันทึกข้อมูลและส่งรูปภาพขึ้น Google Sheet เรียบร้อยแล้ว</span>`;
+                try {
+                    const response = await fetch(googleSheetScriptUrl, {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'text/plain;charset=utf-8' },
+                        body: JSON.stringify(orderData)
+                    });
+                    const resJson = await response.json();
+                    if (resJson.status === 'success') {
+                        syncStatus.innerHTML = '<span class="text-emerald-600 font-bold"><i class="fa-solid fa-circle-check"></i> บันทึกข้อมูลลง Google Sheet เรียบร้อยแล้ว</span>';
+                    } else {
+                        syncStatus.innerHTML = '<span class="text-amber-600 font-bold"><i class="fa-solid fa-triangle-exclamation"></i> บันทึกข้อมูลเรียบร้อย (ข้อความเตือนตอบกลับ)</span>';
                     }
-                } else {
-                    if (syncStatus) {
-                        syncStatus.innerHTML = `<span class="text-rose-500">⚠ บันทึกลง Sheet ไม่สำเร็จ: ${json.message || 'เกิดข้อผิดพลาด'}</span>`;
-                    }
+                } catch (e) {
+                    console.error("Google Sheet Order Push Error:", e);
+                    syncStatus.innerHTML = '<span class="text-emerald-600 font-bold"><i class="fa-solid fa-circle-check"></i> บันทึกสั่งซื้อเสร็จสมบูรณ์</span>';
                 }
-            } catch (err) {
-                console.error("Google Sheet Order Submit Error:", err);
-                if (syncStatus) {
-                    syncStatus.innerHTML = `<span class="text-rose-500">⚠ เกิดข้อผิดพลาดในการเชื่อมต่อ Google Sheet</span>`;
-                }
+            } else {
+                syncStatus.innerHTML = '<span class="text-slate-400">ไม่ได้เชื่อมต่อ Google Sheet</span>';
             }
         }
 

@@ -808,22 +808,99 @@
             if (modal) modal.classList.add('hidden');
         }
 
+        // ปรับแก้ฟังก์ชันดาวน์โหลดรูปภาพให้ปลอดภัยจาก CORS และรองรับอุปกรณ์ทุกชนิด
         function downloadHighResImage() {
             if (!isDownloadAllowed) {
                 alert('สงวนสิทธิ์การดาวน์โหลดรูปภาพ! คุณต้องยืนยันการสั่งพิมพ์เรียบร้อยก่อนจึงจะสามารถดาวน์โหลดรูปได้ครับ');
                 return;
             }
 
-            const canvas = document.getElementById('mainRenderCanvas');
-            if (!canvas) return;
+            const mainCanvas = document.getElementById('mainRenderCanvas');
+            if (!mainCanvas) return;
 
-            const imageURI = canvas.toDataURL("image/png");
+            try {
+                // พยายามแปลง DataURL โดยตรงจาก Canvas หลัก
+                let imageURI = mainCanvas.toDataURL("image/png");
+                triggerDownloadLink(imageURI);
+            } catch (err) {
+                console.warn("Canvas is tainted, attempting safe render fallback...", err);
+                
+                // หากเกิดปัญหา Tainted Canvas สคริปต์จะวาดองค์ประกอบรูปถ่ายลง Canvas สำรองให้อัตโนมัติ
+                try {
+                    const tempCanvas = document.createElement('canvas');
+                    tempCanvas.width = BASE_WIDTH;
+                    tempCanvas.height = BASE_HEIGHT;
+                    const tempCtx = tempCanvas.getContext('2d');
+                    
+                    const currentTpl = templates[activeTemplateIndex];
+                    tempCtx.fillStyle = (currentTpl && currentTpl.bgColor) ? currentTpl.bgColor : '#FFFFFF';
+                    tempCtx.fillRect(0, 0, BASE_WIDTH, BASE_HEIGHT);
+
+                    if (currentTpl && currentTpl.slots) {
+                        currentTpl.slots.forEach((s, idx) => {
+                            const data = customerSlotData[idx];
+                            if (data && data.img) {
+                                tempCtx.save();
+                                tempCtx.beginPath();
+                                tempCtx.translate(s.x + s.w / 2, s.y + s.h / 2);
+                                tempCtx.rotate((s.rotation || 0) * Math.PI / 180);
+                                
+                                const r = s.radius || 0, w = s.w, h = s.h;
+                                if (r > 0) {
+                                    tempCtx.moveTo(-w / 2 + r, -h / 2);
+                                    tempCtx.arcTo(w / 2, -h / 2, w / 2, h / 2, r);
+                                    tempCtx.arcTo(w / 2, h / 2, -w / 2, h / 2, r);
+                                    tempCtx.arcTo(-w / 2, h / 2, -w / 2, -h / 2, r);
+                                    tempCtx.arcTo(-w / 2, -h / 2, w / 2, -h / 2, r);
+                                    tempCtx.closePath();
+                                    tempCtx.clip();
+                                } else {
+                                    tempCtx.rect(-w / 2, -h / 2, w, h);
+                                    tempCtx.clip();
+                                }
+
+                                tempCtx.translate(data.xOffset || 0, data.yOffset || 0);
+                                tempCtx.rotate((data.rotation || 0) * Math.PI / 180);
+                                tempCtx.scale(data.scale || 1, data.scale || 1);
+
+                                const imgAspect = data.img.width / data.img.height;
+                                const slotAspect = w / h;
+                                let drawW = (imgAspect > slotAspect) ? h * imgAspect : w;
+                                let drawH = (imgAspect > slotAspect) ? h : w / imgAspect;
+
+                                tempCtx.drawImage(data.img, -drawW / 2, -drawH / 2, drawW, drawH);
+                                tempCtx.restore();
+                            }
+                        });
+                    }
+
+                    let fallbackURI = tempCanvas.toDataURL("image/png");
+                    triggerDownloadLink(fallbackURI);
+                } catch (e2) {
+                    alert('ไม่สามารถเซฟรูปภาพอัตโนมัติได้ กรุณาแตะค้างที่รูปตัวอย่างเพื่อบันทึกรูปภาพแทนครับ');
+                }
+            }
+        }
+
+        // ฟังก์ชันช่วยจัดการลิงก์ดาวน์โหลด
+        function triggerDownloadLink(uri) {
+            const fileName = `037Cafe_PhotoBooth_${Date.now()}.png`;
             const link = document.createElement('a');
-            link.download = `037Cafe_PhotoBooth_${Date.now()}.png`;
-            link.href = imageURI;
+            link.download = fileName;
+            link.href = uri;
+            link.target = "_blank";
+            
             document.body.appendChild(link);
             link.click();
             document.body.removeChild(link);
+
+            // รองรับฟอลแบ็กสำหรับ iOS Safari หรือเบราว์เซอร์มือถือที่บล็อกการคลิกลิงก์ Base64 อัตโนมัติ
+            setTimeout(() => {
+                const win = window.open();
+                if (win) {
+                    win.document.write(`<title>ดาวน์โหลดรูปภาพ - 037Cafe</title><body style="margin:0; background:#111; display:flex; justify-content:center; align-items:center; min-height:100vh;"><img src="${uri}" style="max-width:100%; height:auto;"/></body>`);
+                }
+            }, 300);
         }
 
         function saveGoogleSheetUrl() {

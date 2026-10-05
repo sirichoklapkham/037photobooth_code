@@ -691,7 +691,7 @@
     <script>
         const BASE_WIDTH = 2400;
         const BASE_HEIGHT = 3600;
-        const DEFAULT_GSHEET_URL = 'https://script.google.com/macros/s/AKfycbz9tPchKVshXkDiegXhG6lNDzbmM6cdx6VAkmhNipgXcy4uqASW4_YG5d2jkOUd9GKM5Q/exec';
+        const DEFAULT_GSHEET_URL = 'https://script.google.com/macros/s/AKfycbwjk81NikB7frGoRpz-r2ZWdgTlIAe_pHgD7fhvLCLdkUgzmF7FI23dD_a5P4RdZVnG/exec';
 
         let currentMode = 'customer';
         let currentStep = 1;
@@ -2160,33 +2160,32 @@
 
                         const imgAspect = data.img.width / data.img.height;
                         const slotAspect = w / h;
-                        let renderW = w, renderH = h;
+                        let renderW = w;
+                        let renderH = h;
 
                         if (imgAspect > slotAspect) {
-                            renderH = h;
                             renderW = h * imgAspect;
                         } else {
-                            renderW = w;
                             renderH = w / imgAspect;
                         }
 
                         ctx.drawImage(data.img, -renderW / 2, -renderH / 2, renderW, renderH);
                         ctx.restore();
                     } else {
-                        ctx.fillStyle = '#F1F5F9';
+                        ctx.fillStyle = "#E2E8F0";
                         ctx.fillRect(-w / 2, -h / 2, w, h);
-                        ctx.fillStyle = '#94A3B8';
-                        ctx.font = 'bold 36px Prompt, sans-serif';
-                        ctx.textAlign = 'center';
-                        ctx.textBaseline = 'middle';
-                        ctx.fillText(`ช่องที่ ${idx + 1}`, 0, 0);
+                        ctx.fillStyle = "#94A3B8";
+                        ctx.font = "bold 40px Prompt";
+                        ctx.textAlign = "center";
+                        ctx.textBaseline = "middle";
+                        ctx.fillText(`Slot #${idx + 1}`, 0, 0);
                     }
 
                     ctx.restore();
                 });
             }
 
-            if (currentTpl && currentTpl.id && loadedBgImages[currentTpl.id]) {
+            if (currentTpl && loadedBgImages[currentTpl.id]) {
                 ctx.drawImage(loadedBgImages[currentTpl.id], 0, 0, BASE_WIDTH, BASE_HEIGHT);
             }
         }
@@ -2196,219 +2195,143 @@
             if (!container) return;
 
             container.addEventListener('mousedown', (e) => {
-                const slotIdx = getCustomerSlotAtPointer(e.clientX, e.clientY);
-                if (slotIdx !== -1) {
-                    activeCustomerSlotIndex = slotIdx;
-                    renderCustomerSlotAdjustControls();
-                    isPanningCustomerPhoto = true;
-                    panStartX = e.clientX;
-                    panStartY = e.clientY;
-
-                    if (!customerSlotData[slotIdx]) {
-                        customerSlotData[slotIdx] = { img: null, xOffset: 0, yOffset: 0, scale: 1, rotation: 0 };
-                    }
-                    initialSlotXOffset = customerSlotData[slotIdx].xOffset || 0;
-                    initialSlotYOffset = customerSlotData[slotIdx].yOffset || 0;
-                }
+                isPanningCustomerPhoto = true;
+                panStartX = e.clientX;
+                panStartY = e.clientY;
+                const slot = customerSlotData[activeCustomerSlotIndex] || { xOffset: 0, yOffset: 0 };
+                initialSlotXOffset = slot.xOffset || 0;
+                initialSlotYOffset = slot.yOffset || 0;
             });
 
             window.addEventListener('mousemove', (e) => {
                 if (!isPanningCustomerPhoto) return;
-                const rect = container.getBoundingClientRect();
-                const scale = BASE_WIDTH / rect.width;
+                const dx = (e.clientX - panStartX) * (BASE_WIDTH / container.clientWidth);
+                const dy = (e.clientY - panStartY) * (BASE_HEIGHT / container.clientHeight);
 
-                const dx = (e.clientX - panStartX) * scale;
-                const dy = (e.clientY - panStartY) * scale;
-
-                if (customerSlotData[activeCustomerSlotIndex]) {
-                    customerSlotData[activeCustomerSlotIndex].xOffset = initialSlotXOffset + dx;
-                    customerSlotData[activeCustomerSlotIndex].yOffset = initialSlotYOffset + dy;
-                    drawCustomerMainCanvas();
+                if (!customerSlotData[activeCustomerSlotIndex]) {
+                    customerSlotData[activeCustomerSlotIndex] = { img: null, xOffset: 0, yOffset: 0, scale: 1, rotation: 0 };
                 }
+
+                customerSlotData[activeCustomerSlotIndex].xOffset = initialSlotXOffset + dx;
+                customerSlotData[activeCustomerSlotIndex].yOffset = initialSlotYOffset + dy;
+                drawCustomerMainCanvas();
             });
 
-            window.addEventListener('mouseup', () => {
-                isPanningCustomerPhoto = false;
-            });
+            window.addEventListener('mouseup', () => { isPanningCustomerPhoto = false; });
 
+            // Touch support for mobile
             container.addEventListener('touchstart', (e) => {
                 if (e.touches.length === 1) {
-                    const t = e.touches[0];
-                    const slotIdx = getCustomerSlotAtPointer(t.clientX, t.clientY);
-                    if (slotIdx !== -1) {
-                        activeCustomerSlotIndex = slotIdx;
-                        renderCustomerSlotAdjustControls();
-                        isPanningCustomerPhoto = true;
-                        panStartX = t.clientX;
-                        panStartY = t.clientY;
-
-                        if (!customerSlotData[slotIdx]) {
-                            customerSlotData[slotIdx] = { img: null, xOffset: 0, yOffset: 0, scale: 1, rotation: 0 };
-                        }
-                        initialSlotXOffset = customerSlotData[slotIdx].xOffset || 0;
-                        initialSlotYOffset = customerSlotData[slotIdx].yOffset || 0;
-                    }
-                } else if (e.touches.length === 2 && isPanningCustomerPhoto) {
-                    const t1 = e.touches[0];
-                    const t2 = e.touches[1];
-                    initialTouchDistance = Math.hypot(t2.clientX - t1.clientX, t2.clientY - t1.clientY);
-                    initialTouchAngle = Math.atan2(t2.clientY - t1.clientY, t2.clientX - t1.clientX) * 180 / Math.PI;
-
-                    const data = customerSlotData[activeCustomerSlotIndex];
-                    if (data) {
-                        initialPhotoScale = data.scale || 1;
-                        initialPhotoRotation = data.rotation || 0;
-                    }
+                    isPanningCustomerPhoto = true;
+                    panStartX = e.touches[0].clientX;
+                    panStartY = e.touches[0].clientY;
+                    const slot = customerSlotData[activeCustomerSlotIndex] || { xOffset: 0, yOffset: 0 };
+                    initialSlotXOffset = slot.xOffset || 0;
+                    initialSlotYOffset = slot.yOffset || 0;
                 }
             }, { passive: false });
 
             container.addEventListener('touchmove', (e) => {
-                if (!isPanningCustomerPhoto) return;
-                e.preventDefault();
+                if (isPanningCustomerPhoto && e.touches.length === 1) {
+                    e.preventDefault();
+                    const dx = (e.touches[0].clientX - panStartX) * (BASE_WIDTH / container.clientWidth);
+                    const dy = (e.touches[0].clientY - panStartY) * (BASE_HEIGHT / container.clientHeight);
 
-                if (e.touches.length === 1) {
-                    const t = e.touches[0];
-                    const rect = container.getBoundingClientRect();
-                    const scale = BASE_WIDTH / rect.width;
-
-                    const dx = (t.clientX - panStartX) * scale;
-                    const dy = (t.clientY - panStartY) * scale;
-
-                    if (customerSlotData[activeCustomerSlotIndex]) {
-                        customerSlotData[activeCustomerSlotIndex].xOffset = initialSlotXOffset + dx;
-                        customerSlotData[activeCustomerSlotIndex].yOffset = initialSlotYOffset + dy;
-                        drawCustomerMainCanvas();
+                    if (!customerSlotData[activeCustomerSlotIndex]) {
+                        customerSlotData[activeCustomerSlotIndex] = { img: null, xOffset: 0, yOffset: 0, scale: 1, rotation: 0 };
                     }
-                } else if (e.touches.length === 2) {
-                    const t1 = e.touches[0];
-                    const t2 = e.touches[1];
-                    const dist = Math.hypot(t2.clientX - t1.clientX, t2.clientY - t1.clientY);
-                    const angle = Math.atan2(t2.clientY - t1.clientY, t2.clientX - t1.clientX) * 180 / Math.PI;
 
-                    if (initialTouchDistance > 0 && customerSlotData[activeCustomerSlotIndex]) {
-                        const scaleFactor = dist / initialTouchDistance;
-                        const newScale = Math.min(Math.max(0.2, initialPhotoScale * scaleFactor), 4);
-                        const angleDiff = angle - initialTouchAngle;
-                        const newRotation = Math.round(initialPhotoRotation + angleDiff);
-
-                        customerSlotData[activeCustomerSlotIndex].scale = newScale;
-                        customerSlotData[activeCustomerSlotIndex].rotation = newRotation;
-
-                        renderCustomerSlotAdjustControls();
-                        drawCustomerMainCanvas();
-                    }
+                    customerSlotData[activeCustomerSlotIndex].xOffset = initialSlotXOffset + dx;
+                    customerSlotData[activeCustomerSlotIndex].yOffset = initialSlotYOffset + dy;
+                    drawCustomerMainCanvas();
                 }
             }, { passive: false });
 
-            container.addEventListener('touchend', (e) => {
-                if (e.touches.length < 2) {
-                    initialTouchDistance = 0;
-                }
-                if (e.touches.length === 0) {
-                    isPanningCustomerPhoto = false;
-                }
-            });
+            container.addEventListener('touchend', () => { isPanningCustomerPhoto = false; });
         }
 
-        function getCustomerSlotAtPointer(clientX, clientY) {
-            const container = document.getElementById('customerCanvasContainer');
-            if (!container) return -1;
-            const rect = container.getBoundingClientRect();
-
-            const scale = BASE_WIDTH / rect.width;
-            const canvasX = (clientX - rect.left) * scale;
-            const canvasY = (clientY - rect.top) * scale;
-
-            const currentTpl = templates[activeTemplateIndex];
-            if (!currentTpl || !currentTpl.slots) return -1;
-
-            for (let i = currentTpl.slots.length - 1; i >= 0; i--) {
-                const s = currentTpl.slots[i];
-                if (canvasX >= s.x && canvasX <= s.x + s.w && canvasY >= s.y && canvasY <= s.y + s.h) {
-                    return i;
-                }
-            }
-            return -1;
-        }
-
-        function submitCustomerOrder() {
+        async function submitCustomerOrder() {
             const nickname = document.getElementById('custNickname').value.trim();
             const phone = document.getElementById('custPhone').value.trim();
             const qty = parseInt(document.getElementById('custQuantity').value) || 1;
 
             if (!nickname || !phone) {
-                alert('กรุณากรอกชื่อและเบอร์โทรศัพท์ให้ครบถ้วน');
+                alert('กรุณากรอกชื่อและเบอร์โทรศัพท์ก่อนยืนยันสั่งพิมพ์');
                 return;
             }
 
             for (let i = 0; i < qty; i++) {
-                const code = customerEnteredCoupons[i] || '';
-                const isVerified = verifiedCouponIndexes[i];
-                const validation = validateSingleCoupon(code, i);
-
-                if (!code || !isVerified || !validation.isValid) {
-                    alert(`กรุณากรอกและกด "ตรวจสอบ" โค้ดให้ถูกต้องครบถ้วนทั้ง ${qty} ใบก่อนยืนยันการสั่งพิมพ์`);
+                const code = customerEnteredCoupons[i];
+                if (!verifiedCouponIndexes[i] || !validateSingleCoupon(code, i).isValid) {
+                    alert(`กรุณากรอกและกดตรวจสอบโค้ดที่ ${i + 1} ให้ถูกต้องก่อนสั่งพิมพ์`);
                     return;
                 }
             }
 
+            const btn = document.getElementById('btnSubmitOrder');
+            btn.disabled = true;
+            btn.innerHTML = `<i class="fa-solid fa-spinner animate-spin"></i> กำลังบันทึกข้อมูล...`;
+
+            // ตัดสิทธิ์โค้ดที่ใช้
             for (let i = 0; i < qty; i++) {
                 const code = customerEnteredCoupons[i];
-                const found = activeCoupons.find(c => c.code && c.code.toUpperCase() === code.toUpperCase());
+                const found = activeCoupons.find(c => c.code && c.code.toUpperCase() === code);
                 if (found) {
                     found.usedCount = (found.usedCount || 0) + 1;
                 }
             }
-            updateCloudSettings({ activeCoupons: activeCoupons });
+            await updateCloudSettings({ activeCoupons: activeCoupons });
 
             const orderNo = 'ORD-' + Math.floor(100000 + Math.random() * 900000);
             const currentTpl = templates[activeTemplateIndex];
+            const canvas = document.getElementById('mainRenderCanvas');
+            const imageBase64 = canvas ? canvas.toDataURL('image/jpeg', 0.85) : '';
 
+            // บันทึกลง Google Sheet
+            const syncStatusEl = document.getElementById('googleSheetSyncStatus');
+            syncStatusEl.innerHTML = `<i class="fa-solid fa-spinner animate-spin text-sky-500"></i> กำลังส่งข้อมูลไปยัง Google Sheets...`;
+
+            if (googleSheetScriptUrl) {
+                try {
+                    const payload = {
+                        action: 'createOrder',
+                        orderNo: orderNo,
+                        custName: nickname,
+                        custPhone: phone,
+                        templateName: currentTpl ? currentTpl.name : 'PhotoBooth',
+                        quantity: qty,
+                        coupons: customerEnteredCoupons.slice(0, qty),
+                        imageBase64: imageBase64
+                    };
+
+                    await fetch(googleSheetScriptUrl, {
+                        method: 'POST',
+                        mode: 'no-cors',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify(payload)
+                    });
+
+                    syncStatusEl.innerHTML = `<i class="fa-solid fa-circle-check text-emerald-500"></i> บันทึกข้อมูลลง Google Sheet เรียบร้อยแล้ว`;
+                } catch (e) {
+                    console.error("GSheet Sync Error:", e);
+                    syncStatusEl.innerHTML = `<i class="fa-solid fa-triangle-exclamation text-amber-500"></i> เกิดข้อผิดพลาดในการบันทึก Google Sheet`;
+                }
+            } else {
+                syncStatusEl.innerHTML = `<i class="fa-solid fa-info-circle text-slate-400"></i> ไม่ได้ตั้งค่า Google Sheet URL`;
+            }
+
+            // แสดงหน้าต่างใบเสร็จ
             document.getElementById('recName').innerText = nickname;
             document.getElementById('recPhone').innerText = phone;
             document.getElementById('recTemplate').innerText = currentTpl ? currentTpl.name : '-';
             document.getElementById('recQuantity').innerText = `${qty} ใบ`;
-            document.getElementById('recCoupons').innerText = customerEnteredCoupons.join(', ');
+            document.getElementById('recCoupons').innerText = customerEnteredCoupons.slice(0, qty).join(', ');
             document.getElementById('recOrderNo').innerText = orderNo;
 
-            const syncStatus = document.getElementById('googleSheetSyncStatus');
-            syncStatus.innerHTML = '<i class="fa-solid fa-spinner fa-spin text-sky-500"></i> กำลังบันทึกข้อมูลลง Google Sheet...';
-
-            if (googleSheetScriptUrl) {
-                const payload = {
-                    action: 'addOrder',
-                    orderNo: orderNo,
-                    nickname: nickname,
-                    phone: phone,
-                    templateName: currentTpl ? currentTpl.name : '',
-                    quantity: qty,
-                    coupons: customerEnteredCoupons.join(', '),
-                    timestamp: new Date().toLocaleString('th-TH')
-                };
-
-                fetch(googleSheetScriptUrl, {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'text/plain;charset=utf-8' },
-                    body: JSON.stringify(payload)
-                })
-                .then(res => res.json())
-                .then(data => {
-                    syncStatus.innerHTML = '<span class="text-emerald-600"><i class="fa-solid fa-circle-check"></i> บันทึกข้อมูลลง Google Sheet เรียบร้อยแล้ว</span>';
-                })
-                .catch(err => {
-                    console.error("GSheet Error:", err);
-                    syncStatus.innerHTML = '<span class="text-amber-600"><i class="fa-solid fa-triangle-exclamation"></i> ไม่สามารถบันทึกลง Google Sheet ได้</span>';
-                });
-            } else {
-                syncStatus.innerHTML = '';
-            }
-
             document.getElementById('receiptModal').classList.remove('hidden');
-        }
 
-        function closeReceiptModal() {
-            document.getElementById('receiptModal').classList.add('hidden');
-            goToStep(1);
+            btn.disabled = false;
+            btn.innerHTML = `<i class="fa-solid fa-print"></i> ยืนยันการสั่งพิมพ์รูป`;
         }
 
         function downloadHighResImage() {
@@ -2416,9 +2339,14 @@
             if (!canvas) return;
 
             const link = document.createElement('a');
-            link.download = `037Cafe_PhotoBooth_${Date.now()}.png`;
-            link.href = canvas.toDataURL('image/png', 1.0);
+            link.download = `037Cafe_Photo_${Date.now()}.jpg`;
+            link.href = canvas.toDataURL('image/jpeg', 0.95);
             link.click();
+        }
+
+        function closeReceiptModal() {
+            document.getElementById('receiptModal').classList.add('hidden');
+            goToStep(1);
         }
     </script>
 </body>

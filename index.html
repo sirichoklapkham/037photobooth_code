@@ -198,6 +198,26 @@
                     <div id="staffTemplateSelectorList" class="flex gap-2 overflow-x-auto pb-2 custom-scrollbar"></div>
                 </div>
 
+                <!-- Bulk Template Import Panel -->
+                <div class="bg-white rounded-3xl p-5 border border-sky-100 pastel-shadow space-y-3">
+                    <h2 class="text-xs font-bold text-slate-800 flex items-center gap-2 border-b border-sky-100 pb-2">
+                        <i class="fa-solid fa-file-import text-sky-500"></i>
+                        นำเข้าเทมเพลตทีละหลายลิงก์ (Bulk Import)
+                    </h2>
+                    <div>
+                        <label class="block text-[11px] font-semibold text-slate-600 mb-1">หมวดหมู่สำหรับลิงก์ที่จะนำเข้า</label>
+                        <select id="bulkImportCategory" class="w-full text-xs px-3 py-1.5 rounded-xl border border-sky-200 bg-white mb-2">
+                            <option value="PhotoBooth">1. PhotoBooth</option>
+                            <option value="สตูดิโอและกิ๊ฟช็อป">2. สตูดิโอและกิ๊ฟช็อป</option>
+                        </select>
+                        <label class="block text-[11px] font-semibold text-slate-600 mb-1">วาง Google Drive Links / FILE_IDs (เว้นบรรทัดละ 1 ลิงก์)</label>
+                        <textarea id="bulkImportUrlsInput" rows="4" placeholder="https://drive.google.com/file/d/.../view&#10;https://drive.google.com/file/d/.../view" class="w-full text-xs p-2.5 rounded-xl border border-sky-200 font-mono focus:outline-none focus:ring-2 focus:ring-sky-400 custom-scrollbar"></textarea>
+                    </div>
+                    <button onclick="processBulkImportTemplates()" class="w-full py-2 bg-indigo-500 hover:bg-indigo-600 text-white font-semibold rounded-xl text-xs shadow-sm transition flex items-center justify-center gap-1">
+                        <i class="fa-solid fa-cloud-arrow-up"></i> เพิ่มแบบกรอบทั้งหมดเข้าสู่ระบบ
+                    </button>
+                </div>
+
                 <!-- Active Template Slot Precision Controls -->
                 <div class="bg-white rounded-3xl p-5 border border-sky-100 pastel-shadow">
                     <div class="flex items-center justify-between pb-3 border-b border-sky-100 mb-4">
@@ -1709,6 +1729,45 @@
                     summaryCouponStatus.className = "font-bold text-rose-500";
                     summaryCouponStatus.innerText = `ยังตรวจสอบโค้ดไม่ครบ (${validCount}/${qty} โค้ด)`;
                 }
+            }
+        }
+
+        function processBulkImportTemplates() {
+            const rawText = document.getElementById('bulkImportUrlsInput').value;
+            const category = document.getElementById('bulkImportCategory').value;
+
+            if (!rawText.trim()) {
+                alert('กรุณาวางลิงก์ Google Drive อย่างน้อย 1 ลิงก์');
+                return;
+            }
+
+            const lines = rawText.split('\n').map(l => l.trim()).filter(l => l.length > 0);
+            let addedCount = 0;
+
+            lines.forEach((link, idx) => {
+                const directLink = getGoogleDriveDirectLink(link);
+                if (directLink) {
+                    addedCount++;
+                    templates.push({
+                        id: `tpl_bulk_${Date.now()}_${idx}`,
+                        name: `${category} แบบที่ ${templates.filter(t => t.category === category).length + 1}`,
+                        category: category,
+                        price: 120,
+                        bgColor: '#EBF5FF',
+                        driveUrl: link,
+                        bgImage: directLink,
+                        slots: []
+                    });
+                }
+            });
+
+            if (addedCount > 0) {
+                document.getElementById('bulkImportUrlsInput').value = '';
+                saveTemplatesToCloud();
+                preloadAndAutoScanInitialTemplates();
+                alert(`นำเข้าเทมแพลตใหม่จำนวน ${addedCount} ลิงก์ เรียบร้อยแล้ว!`);
+            } else {
+                alert('ไม่พบลิงก์ Google Drive ที่ถูกต้อง');
             }
         }
 

@@ -137,7 +137,7 @@
         <section id="staffModeSection" class="hidden grid grid-cols-1 lg:grid-cols-12 gap-6">
             <div class="lg:col-span-5 space-y-4">
                 
-                <!-- Template List Management Panel -->
+                <!-- Template List Management Panel (ปรับปรุงแยกหมวดหมู่) -->
                 <div class="bg-white rounded-3xl p-5 border border-sky-100 pastel-shadow">
                     <div class="flex items-center justify-between pb-3 border-b border-sky-100 mb-3">
                         <h2 class="text-xs font-bold text-slate-800 flex items-center gap-2">
@@ -148,7 +148,25 @@
                             <i class="fa-solid fa-plus"></i> เพิ่มแบบกรอบใหม่
                         </button>
                     </div>
-                    <div id="staffTemplateSelectorList" class="flex gap-2 overflow-x-auto pb-2 custom-scrollbar"></div>
+
+                    <!-- แท็บเลือกหมวดหมู่สำหรับ Staff -->
+                    <div id="staffCategoryTabs" class="flex gap-1.5 mb-3 overflow-x-auto custom-scrollbar pb-1">
+                        <button onclick="selectStaffCategory('ALL')" id="staffCatTab_ALL" class="px-2.5 py-1 rounded-xl text-[11px] font-semibold shrink-0 bg-sky-500 text-white transition shadow-xs">
+                            ทั้งหมด
+                        </button>
+                        <button onclick="selectStaffCategory('PhotoBooth อัพโหลดรูป')" id="staffCatTab_CAT1" class="px-2.5 py-1 rounded-xl text-[11px] font-semibold shrink-0 bg-slate-100 text-slate-600 hover:bg-sky-100 transition">
+                            1. อัพโหลดรูป
+                        </button>
+                        <button onclick="selectStaffCategory('PhotoBooth มุมสูง')" id="staffCatTab_CAT2" class="px-2.5 py-1 rounded-xl text-[11px] font-semibold shrink-0 bg-slate-100 text-slate-600 hover:bg-sky-100 transition">
+                            2. มุมสูง
+                        </button>
+                        <button onclick="selectStaffCategory('สตูดิโอและกิ๊ฟช็อป')" id="staffCatTab_CAT3" class="px-2.5 py-1 rounded-xl text-[11px] font-semibold shrink-0 bg-slate-100 text-slate-600 hover:bg-sky-100 transition">
+                            3. สตูดิโอฯ
+                        </button>
+                    </div>
+
+                    <!-- รายการกรอบรูป (แยกตามหมวดหมู่ที่เลือก) -->
+                    <div id="staffTemplateSelectorList" class="space-y-4 max-h-[380px] overflow-y-auto pr-1 custom-scrollbar"></div>
                 </div>
 
                 <!-- Bulk Template Import Panel -->
@@ -160,8 +178,9 @@
                     <div>
                         <label class="block text-[11px] font-semibold text-slate-600 mb-1">หมวดหมู่สำหรับลิงก์ที่จะนำเข้า</label>
                         <select id="bulkImportCategory" class="w-full text-xs px-3 py-1.5 rounded-xl border border-sky-200 bg-white mb-2">
-                            <option value="PhotoBooth">1. PhotoBooth</option>
-                            <option value="สตูดิโอและกิ๊ฟช็อป">2. สตูดิโอและกิ๊ฟช็อป</option>
+                            <option value="PhotoBooth อัพโหลดรูป">1. PhotoBooth อัพโหลดรูป</option>
+                            <option value="PhotoBooth มุมสูง">2. PhotoBooth มุมสูง</option>
+                            <option value="สตูดิโอและกิ๊ฟช็อป">3. สตูดิโอและกิ๊ฟช็อป</option>
                         </select>
                         <label class="block text-[11px] font-semibold text-slate-600 mb-1">วาง Google Drive Links / FILE_IDs (เว้นบรรทัดละ 1 ลิงก์)</label>
                         <textarea id="bulkImportUrlsInput" rows="4" placeholder="https://drive.google.com/file/d/.../view&#10;https://drive.google.com/file/d/.../view" class="w-full text-xs p-2.5 rounded-xl border border-sky-200 font-mono focus:outline-none focus:ring-2 focus:ring-sky-400 custom-scrollbar"></textarea>
@@ -199,8 +218,9 @@
                         <div>
                             <label class="block text-[11px] font-semibold text-slate-600 mb-1">หมวดหมู่กรอบรูป</label>
                             <select id="staffTemplateCategory" onchange="updateCurrentTemplateCategory()" class="w-full text-xs px-3 py-1.5 rounded-xl border border-sky-200 bg-white">
-                                <option value="PhotoBooth">1. PhotoBooth</option>
-                                <option value="สตูดิโอและกิ๊ฟช็อป">2. สตูดิโอและกิ๊ฟช็อป</option>
+                                <option value="PhotoBooth อัพโหลดรูป">1. PhotoBooth อัพโหลดรูป</option>
+                                <option value="PhotoBooth มุมสูง">2. PhotoBooth มุมสูง</option>
+                                <option value="สตูดิโอและกิ๊ฟช็อป">3. สตูดิโอและกิ๊ฟช็อป</option>
                             </select>
                         </div>
 
@@ -362,13 +382,13 @@
                     </h2>
                     
                     <div id="categoryTabs" class="flex gap-2 mb-3 border-b border-sky-100 pb-2 overflow-x-auto custom-scrollbar">
-                        <button onclick="selectCategory('ALL')" id="catTab_ALL" class="px-3 py-1.5 rounded-xl text-xs font-semibold shrink-0 bg-sky-500 text-white shadow-sm transition">
-                            ทั้งหมด
+                        <button onclick="selectCategory('PhotoBooth อัพโหลดรูป')" id="catTab_CAT1" class="px-3 py-1.5 rounded-xl text-xs font-semibold shrink-0 bg-sky-500 text-white shadow-sm transition">
+                            PhotoBooth อัพโหลดรูป
                         </button>
-                        <button onclick="selectCategory('PhotoBooth')" id="catTab_CAT1" class="px-3 py-1.5 rounded-xl text-xs font-semibold shrink-0 bg-slate-100 text-slate-600 hover:bg-sky-100 transition">
-                            PhotoBooth
+                        <button onclick="selectCategory('PhotoBooth มุมสูง')" id="catTab_CAT2" class="px-3 py-1.5 rounded-xl text-xs font-semibold shrink-0 bg-slate-100 text-slate-600 hover:bg-sky-100 transition">
+                            PhotoBooth มุมสูง
                         </button>
-                        <button onclick="selectCategory('สตูดิโอและกิ๊ฟช็อป')" id="catTab_CAT2" class="px-3 py-1.5 rounded-xl text-xs font-semibold shrink-0 bg-slate-100 text-slate-600 hover:bg-sky-100 transition">
+                        <button onclick="selectCategory('สตูดิโอและกิ๊ฟช็อป')" id="catTab_CAT3" class="px-3 py-1.5 rounded-xl text-xs font-semibold shrink-0 bg-slate-100 text-slate-600 hover:bg-sky-100 transition">
                             สตูดิโอและกิ๊ฟช็อป
                         </button>
                     </div>
@@ -543,7 +563,7 @@
                                     ช่องทางโอนเงินชำระค่าบริการ
                                 </span>
                                 <span class="text-xs font-bold text-sky-600 bg-white px-2 py-0.5 rounded-lg border border-sky-200">
-                                    ยอดชำระสุทธิ: ฿<span id="displayTotalPrice">120</span>
+                                    ยอดชำระสุทธิ: ฿<span id="displayTotalPrice">100</span>
                                 </span>
                             </div>
 
@@ -585,7 +605,7 @@
                         </div>
                         <div class="flex justify-between text-slate-600">
                             <span>ยอดเงินรวมทั้งสิ้น:</span>
-                            <span class="font-bold text-sky-600 text-sm">฿<span id="summaryTotalPrice">120</span></span>
+                            <span class="font-bold text-sky-600 text-sm">฿<span id="summaryTotalPrice">100</span></span>
                         </div>
                     </div>
 
@@ -719,7 +739,8 @@
         let activeTemplateIndex = 0;
         let activeStaffSlotIndex = 0;
         let activeCustomerSlotIndex = 0;
-        let activeCategoryFilter = 'ALL';
+        let activeCategoryFilter = 'PhotoBooth อัพโหลดรูป';
+        let activeStaffCategoryFilter = 'ALL'; // ตัวกรองหมวดหมู่สำหรับ Staff
 
         let googleSheetScriptUrl = localStorage.getItem('037_gsheet_url') || DEFAULT_GSHEET_URL;
 
@@ -1421,7 +1442,13 @@
         function calculatePrice() {
             const qty = parseInt(document.getElementById('custQuantity').value) || 1;
             const currentTpl = templates[activeTemplateIndex];
-            const pricePerUnit = (currentTpl && currentTpl.price) ? currentTpl.price : 120;
+            
+            // กำหนดราคาตั้งต้นของแต่ละหมวด
+            let defaultPrice = 100;
+            if (activeCategoryFilter === 'PhotoBooth มุมสูง') defaultPrice = 120;
+            else if (activeCategoryFilter === 'สตูดิโอและกิ๊ฟช็อป') defaultPrice = 150;
+
+            const pricePerUnit = (currentTpl && currentTpl.price) ? currentTpl.price : defaultPrice;
             const totalPrice = pricePerUnit * qty;
 
             const summaryQty = document.getElementById('summaryQty');
@@ -1450,6 +1477,10 @@
                 return;
             }
 
+            let defaultPrice = 100;
+            if (category === 'PhotoBooth มุมสูง') defaultPrice = 120;
+            else if (category === 'สตูดิโอและกิ๊ฟช็อป') defaultPrice = 150;
+
             const lines = rawText.split('\n').map(l => l.trim()).filter(l => l.length > 0);
             let addedCount = 0;
 
@@ -1461,7 +1492,7 @@
                         id: `tpl_bulk_${Date.now()}_${idx}`,
                         name: `${category} แบบที่ ${templates.filter(t => t.category === category).length + 1}`,
                         category: category,
-                        price: 120,
+                        price: defaultPrice,
                         bgColor: '#EBF5FF',
                         driveUrl: link,
                         bgImage: directLink,
@@ -1518,11 +1549,26 @@
 
             templates = [];
 
+            // หมวด 1: PhotoBooth อัพโหลดรูป (ราคา 100 บาท)
             cat1Links.forEach((link, index) => {
                 templates.push({
                     id: `cat1_${index + 1}`,
                     name: `PhotoBooth แบบที่ ${index + 1}`,
-                    category: 'PhotoBooth',
+                    category: 'PhotoBooth อัพโหลดรูป',
+                    price: 100,
+                    bgColor: '#EBF5FF',
+                    driveUrl: link,
+                    bgImage: getGoogleDriveDirectLink(link),
+                    slots: []
+                });
+            });
+
+            // หมวด 2: PhotoBooth มุมสูง (กรอบรูปแบบเดียวกัน แต่ราคา 120 บาท)
+            cat1Links.forEach((link, index) => {
+                templates.push({
+                    id: `cat2_top_${index + 1}`,
+                    name: `PhotoBooth มุมสูง แบบที่ ${index + 1}`,
+                    category: 'PhotoBooth มุมสูง',
                     price: 120,
                     bgColor: '#EBF5FF',
                     driveUrl: link,
@@ -1531,12 +1577,13 @@
                 });
             });
 
+            // หมวด 3: สตูดิโอและกิ๊ฟช็อป (ราคา 150 บาท)
             cat2Links.forEach((link, index) => {
                 templates.push({
-                    id: `cat2_${index + 1}`,
+                    id: `cat3_studio_${index + 1}`,
                     name: `สตูดิโอ แบบที่ ${index + 1}`,
                     category: 'สตูดิโอและกิ๊ฟช็อป',
-                    price: 120,
+                    price: 150,
                     bgColor: '#EBF5FF',
                     driveUrl: link,
                     bgImage: getGoogleDriveDirectLink(link),
@@ -1713,28 +1760,91 @@
             drawStaffCanvasOverlay();
         }
 
+        function selectStaffCategory(catName) {
+            activeStaffCategoryFilter = catName;
+            
+            const btnAll = document.getElementById('staffCatTab_ALL');
+            const btn1 = document.getElementById('staffCatTab_CAT1');
+            const btn2 = document.getElementById('staffCatTab_CAT2');
+            const btn3 = document.getElementById('staffCatTab_CAT3');
+
+            const inactiveClass = "px-2.5 py-1 rounded-xl text-[11px] font-semibold shrink-0 bg-slate-100 text-slate-600 hover:bg-sky-100 transition";
+            const activeClass = "px-2.5 py-1 rounded-xl text-[11px] font-semibold shrink-0 bg-sky-500 text-white transition shadow-xs";
+
+            if (btnAll) btnAll.className = (catName === 'ALL') ? activeClass : inactiveClass;
+            if (btn1) btn1.className = (catName === 'PhotoBooth อัพโหลดรูป') ? activeClass : inactiveClass;
+            if (btn2) btn2.className = (catName === 'PhotoBooth มุมสูง') ? activeClass : inactiveClass;
+            if (btn3) btn3.className = (catName === 'สตูดิโอและกิ๊ฟช็อป') ? activeClass : inactiveClass;
+
+            renderStaffTemplateSelectorList();
+        }
+
         function renderStaffTemplateSelectorList() {
             const container = document.getElementById('staffTemplateSelectorList');
             if (!container) return;
             container.innerHTML = '';
 
-            templates.forEach((tpl, idx) => {
-                const item = document.createElement('div');
-                item.className = `p-2.5 rounded-2xl border cursor-pointer shrink-0 transition flex flex-col justify-between ${
-                    idx === activeTemplateIndex ? 'border-sky-500 bg-sky-50 ring-2 ring-sky-300' : 'border-slate-200 bg-white hover:border-sky-200'
-                }`;
-                item.style.width = '130px';
-                item.onclick = () => selectStaffTemplate(idx);
+            const categories = [
+                'PhotoBooth อัพโหลดรูป',
+                'PhotoBooth มุมสูง',
+                'สตูดิโอและกิ๊ฟช็อป'
+            ];
 
-                item.innerHTML = `
-                    <div class="aspect-[2/3] bg-slate-100 rounded-xl overflow-hidden mb-2 relative border">
-                        ${tpl.bgImage ? `<img src="${tpl.bgImage}" class="w-full h-full object-cover">` : '<div class="flex items-center justify-center h-full text-[10px] text-slate-400">ไม่มีรูป</div>'}
-                        <span class="absolute top-1 left-1 bg-black/60 text-white text-[9px] font-bold px-1.5 py-0.5 rounded-md">${tpl.slots ? tpl.slots.length : 0} Slots</span>
-                    </div>
-                    <div class="text-[11px] font-bold text-slate-800 truncate">${tpl.name || 'ไม่มีชื่อ'}</div>
-                    <div class="text-[10px] text-sky-600 font-semibold">฿${tpl.price || 0}</div>
+            const categoriesToDisplay = activeStaffCategoryFilter === 'ALL' 
+                ? categories 
+                : [activeStaffCategoryFilter];
+
+            categoriesToDisplay.forEach((cat) => {
+                const filteredTemplates = templates.filter(t => t.category === cat);
+                if (filteredTemplates.length === 0 && activeStaffCategoryFilter !== 'ALL') return;
+
+                const groupContainer = document.createElement('div');
+                groupContainer.className = 'bg-slate-50 border border-sky-100 rounded-2xl p-3 space-y-2';
+
+                const header = document.createElement('div');
+                header.className = 'flex justify-between items-center text-xs font-bold text-slate-700 pb-1 border-b border-sky-200/60';
+                header.innerHTML = `
+                    <span class="flex items-center gap-1.5 text-sky-700">
+                        <i class="fa-solid fa-folder-open text-sky-500"></i>
+                        ${cat}
+                    </span>
+                    <span class="bg-sky-100 text-sky-700 text-[10px] px-2 py-0.5 rounded-full font-bold">
+                        ${filteredTemplates.length} แบบ
+                    </span>
                 `;
-                container.appendChild(item);
+                groupContainer.appendChild(header);
+
+                const scrollWrap = document.createElement('div');
+                scrollWrap.className = 'flex gap-2 overflow-x-auto pb-1 custom-scrollbar';
+
+                if (filteredTemplates.length === 0) {
+                    scrollWrap.innerHTML = `<div class="text-[11px] text-slate-400 py-2 italic">ไม่มีกรอบในหมวดหมู่นี้</div>`;
+                } else {
+                    filteredTemplates.forEach((tpl) => {
+                        const realIdx = templates.indexOf(tpl);
+                        const isSelected = realIdx === activeTemplateIndex;
+
+                        const item = document.createElement('div');
+                        item.className = `p-2 rounded-xl border cursor-pointer shrink-0 transition flex flex-col justify-between ${
+                            isSelected ? 'border-sky-500 bg-white ring-2 ring-sky-300 shadow-sm' : 'border-slate-200 bg-white hover:border-sky-200'
+                        }`;
+                        item.style.width = '115px';
+                        item.onclick = () => selectStaffTemplate(realIdx);
+
+                        item.innerHTML = `
+                            <div class="aspect-[2/3] bg-slate-100 rounded-lg overflow-hidden mb-1.5 relative border">
+                                ${tpl.bgImage ? `<img src="${tpl.bgImage}" class="w-full h-full object-cover">` : '<div class="flex items-center justify-center h-full text-[9px] text-slate-400">ไม่มีรูป</div>'}
+                                <span class="absolute top-1 left-1 bg-black/60 text-white text-[8px] font-bold px-1 py-0.5 rounded">${tpl.slots ? tpl.slots.length : 0} Slots</span>
+                            </div>
+                            <div class="text-[10px] font-bold text-slate-800 truncate">${tpl.name || 'ไม่มีชื่อ'}</div>
+                            <div class="text-[9px] text-sky-600 font-semibold">฿${tpl.price || 0}</div>
+                        `;
+                        scrollWrap.appendChild(item);
+                    });
+                }
+
+                groupContainer.appendChild(scrollWrap);
+                container.appendChild(groupContainer);
             });
         }
 
@@ -1746,11 +1856,12 @@
         }
 
         function addNewBlankTemplate() {
+            const cat = activeStaffCategoryFilter === 'ALL' ? 'PhotoBooth อัพโหลดรูป' : activeStaffCategoryFilter;
             const newTpl = {
                 id: `tpl_${Date.now()}`,
                 name: `กรอบแบบใหม่ ${templates.length + 1}`,
-                category: 'PhotoBooth',
-                price: 120,
+                category: cat,
+                price: cat === 'PhotoBooth มุมสูง' ? 120 : (cat === 'สตูดิโอและกิ๊ฟช็อป' ? 150 : 100),
                 bgColor: '#FFFFFF',
                 driveUrl: '',
                 bgImage: '',
@@ -1797,6 +1908,7 @@
         function updateCurrentTemplateCategory() {
             const val = document.getElementById('staffTemplateCategory').value;
             templates[activeTemplateIndex].category = val;
+            renderStaffTemplateSelectorList();
         }
 
         function applyGoogleDriveFrame() {
@@ -1827,7 +1939,7 @@
 
             document.getElementById('staffTemplateName').value = currentTpl.name || '';
             document.getElementById('staffTemplatePrice').value = currentTpl.price || 0;
-            document.getElementById('staffTemplateCategory').value = currentTpl.category || 'PhotoBooth';
+            document.getElementById('staffTemplateCategory').value = currentTpl.category || 'PhotoBooth อัพโหลดรูป';
             document.getElementById('staffBgDriveUrl').value = currentTpl.driveUrl || '';
 
             const slots = currentTpl.slots || [];
@@ -1990,20 +2102,27 @@
 
         function selectCategory(catName) {
             activeCategoryFilter = catName;
-            ['ALL', 'CAT1', 'CAT2'].forEach(id => {
-                const btn = document.getElementById(`catTab_${id}`);
-                if (btn) btn.className = "px-3 py-1.5 rounded-xl text-xs font-semibold shrink-0 bg-slate-100 text-slate-600 hover:bg-sky-100 transition";
-            });
+            
+            const btn1 = document.getElementById('catTab_CAT1');
+            const btn2 = document.getElementById('catTab_CAT2');
+            const btn3 = document.getElementById('catTab_CAT3');
 
-            if (catName === 'ALL') {
-                document.getElementById('catTab_ALL').className = "px-3 py-1.5 rounded-xl text-xs font-semibold shrink-0 bg-sky-500 text-white shadow-sm transition";
-            } else if (catName === 'PhotoBooth') {
-                document.getElementById('catTab_CAT1').className = "px-3 py-1.5 rounded-xl text-xs font-semibold shrink-0 bg-sky-500 text-white shadow-sm transition";
-            } else {
-                document.getElementById('catTab_CAT2').className = "px-3 py-1.5 rounded-xl text-xs font-semibold shrink-0 bg-sky-500 text-white shadow-sm transition";
-            }
+            const inactiveClass = "px-3 py-1.5 rounded-xl text-xs font-semibold shrink-0 bg-slate-100 text-slate-600 hover:bg-sky-100 transition";
+            const activeClass = "px-3 py-1.5 rounded-xl text-xs font-semibold shrink-0 bg-sky-500 text-white shadow-sm transition";
+
+            if (btn1) btn1.className = (catName === 'PhotoBooth อัพโหลดรูป') ? activeClass : inactiveClass;
+            if (btn2) btn2.className = (catName === 'PhotoBooth มุมสูง') ? activeClass : inactiveClass;
+            if (btn3) btn3.className = (catName === 'สตูดิโอและกิ๊ฟช็อป') ? activeClass : inactiveClass;
 
             renderTemplateGrid();
+            
+            // เลือกเทมแพลตแรกในหมวดหมู่นี้โดยอัตโนมัติ
+            const filtered = templates.filter(t => t.category === activeCategoryFilter);
+            if (filtered.length > 0) {
+                activeTemplateIndex = templates.indexOf(filtered[0]);
+                renderCustomerView();
+            }
+            calculatePrice();
         }
 
         function renderTemplateGrid() {
@@ -2011,7 +2130,7 @@
             if (!grid) return;
             grid.innerHTML = '';
 
-            const filtered = templates.filter(t => activeCategoryFilter === 'ALL' || t.category === activeCategoryFilter);
+            const filtered = templates.filter(t => t.category === activeCategoryFilter);
 
             filtered.forEach((tpl) => {
                 const realIdx = templates.indexOf(tpl);
@@ -2453,7 +2572,12 @@
             }
 
             const currentTpl = templates[activeTemplateIndex];
-            const pricePerUnit = (currentTpl && currentTpl.price) ? currentTpl.price : 120;
+            
+            let defaultPrice = 100;
+            if (activeCategoryFilter === 'PhotoBooth มุมสูง') defaultPrice = 120;
+            else if (activeCategoryFilter === 'สตูดิโอและกิ๊ฟช็อป') defaultPrice = 150;
+
+            const pricePerUnit = (currentTpl && currentTpl.price) ? currentTpl.price : defaultPrice;
             const totalPrice = pricePerUnit * qty;
             const orderNo = 'ORD-' + Math.floor(100000 + Math.random() * 900000);
 

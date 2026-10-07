@@ -199,7 +199,7 @@
 
                             <div class="space-y-1 pt-1">
                                 <label class="block text-[10px] font-semibold text-slate-600"><i class="fa-solid fa-qrcode text-sky-500"></i> ลิงก์สำหรับสร้าง QR Code บนใบโค้ด:</label>
-                                <input type="text" id="couponQrUrlInput" value="https://037cafe.com" placeholder="เช่น https://037cafe.com" class="w-full text-xs px-2.5 py-1.5 rounded-xl border border-sky-200 font-mono">
+                                <input type="text" id="couponQrUrlInput" value="https://037photoboothcode.vercel.app/" placeholder="เช่น https://037photoboothcode.vercel.app/" class="w-full text-xs px-2.5 py-1.5 rounded-xl border border-sky-200 font-mono">
                             </div>
 
                             <div class="grid grid-cols-2 gap-2 pt-2">
@@ -967,7 +967,6 @@
             }
         }
 
-        // [แก้ไขจุดที่ 1]: บันทึกการสุ่มโค้ดลง Cloud โดยตรงทันที
         async function generateRandomSingleUseCoupons() {
             const countInput = parseInt(document.getElementById('randomCouponCountInput').value) || 18;
             if (countInput <= 0) return;
@@ -992,8 +991,9 @@
             }
 
             activeCoupons = newRandomCoupons;
-            await updateCloudSettings({ activeCoupons: activeCoupons });
             renderSingleUseCouponList();
+
+            await updateCloudSettings({ activeCoupons: activeCoupons });
             alert(`สุ่มสร้างโค้ดและซิงก์ไปยัง Cloud เรียบร้อยแล้วจำนวน ${countInput} โค้ด!`);
         }
 
@@ -1010,16 +1010,16 @@
         async function deleteCouponRow(index) {
             if (confirm('คุณต้องการลบโค้ดนี้หรือไม่?')) {
                 activeCoupons.splice(index, 1);
-                await updateCloudSettings({ activeCoupons: activeCoupons });
                 renderSingleUseCouponList();
+                await updateCloudSettings({ activeCoupons: activeCoupons });
             }
         }
 
         async function resetUsedCouponsOnly() {
             if (!confirm('คุณต้องการรีเซ็ทสิทธิ์การใช้โค้ดทั้งหมดให้กลับมาใช้ได้ใหม่หรือไม่?')) return;
             activeCoupons.forEach(c => c.usedCount = 0);
-            await updateCloudSettings({ activeCoupons: activeCoupons });
             renderSingleUseCouponList();
+            await updateCloudSettings({ activeCoupons: activeCoupons });
             alert('รีเซ็ทสิทธิ์โค้ดเรียบร้อยแล้ว');
         }
 
@@ -1048,7 +1048,7 @@
 
         async function generateAndDownloadCouponsPDF() {
             const pdfGrid = document.getElementById('pdfCouponsGrid');
-            const targetUrl = document.getElementById('couponQrUrlInput').value.trim() || 'https://037cafe.com';
+            const targetUrl = document.getElementById('couponQrUrlInput').value.trim() || 'https://037photoboothcode.vercel.app/';
             
             if (!pdfGrid) return;
             pdfGrid.innerHTML = '';
@@ -1583,7 +1583,6 @@
             return false;
         }
 
-        // [แก้ไขจุดที่ 2]: ปรับปรุงตัวซิงก์ Cloud ไม่ให้เขียนทับข้อมูลที่มีอยู่แล้วด้วยค่า Default
         function initCloudSettingsListener() {
             if (!window.settingsDocRef || !window.templatesDocRef) {
                 setTimeout(initCloudSettingsListener, 300);
@@ -1600,7 +1599,8 @@
                     activeCoupons = defaultCoupons;
                     window.setDoc(window.settingsDocRef, { activeCoupons: defaultCoupons }, { merge: true });
                 }
-                if (currentMode === 'staff') renderSingleUseCouponList();
+                
+                renderSingleUseCouponList();
                 calculatePrice();
             }, (err) => { console.error("Firebase Coupon Sync Error:", err); });
 
@@ -1635,7 +1635,6 @@
             }
         }
 
-        // [แก้ไขจุดที่ 3]: บันทึกข้อมูล Templates ลงทั้ง Firebase และ Backup ไปยัง Google Sheets
         async function saveTemplatesToCloud() {
             if (window.templatesDocRef) {
                 try {
@@ -2739,7 +2738,7 @@
                     slot.y = Math.max(0, Math.min(BASE_HEIGHT - slot.h, Math.round(staffInitialSlotY + dy)));
                 } else if (isStaffResizingSlot) {
                     slot.w = Math.max(100, Math.min(BASE_WIDTH - slot.x, Math.round(staffInitialSlotW + dx)));
-                    slot.h = Math.max(100, Math.min(BASE_HEIGHT - slot.y, Math.round(staffInitialSlotH + dy)));
+                    slot.h = Math.max(100, Math.min(BASE_HEIGHT - slot.h, Math.round(staffInitialSlotH + dy)));
                 }
 
                 renderStaffSlotControls();

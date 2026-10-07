@@ -137,6 +137,31 @@
         <section id="staffModeSection" class="hidden grid grid-cols-1 lg:grid-cols-12 gap-6">
             <div class="lg:col-span-5 space-y-4">
                 
+                <!-- Batch Category Price Adjustment Panel (เพิ่มฟังก์ชันปรับราคาในแต่ละหมวดหมู่รอบเดียว) -->
+                <div class="bg-white rounded-3xl p-5 border border-sky-100 pastel-shadow space-y-3">
+                    <h2 class="text-xs font-bold text-slate-800 flex items-center gap-2 border-b border-sky-100 pb-2">
+                        <i class="fa-solid fa-tags text-sky-500"></i>
+                        ปรับราคาตามหมวดหมู่รอบเดียว (Category Price Batch Update)
+                    </h2>
+                    <div class="grid grid-cols-1 sm:grid-cols-2 gap-2">
+                        <div>
+                            <label class="block text-[11px] font-semibold text-slate-600 mb-1">เลือกหมวดหมู่</label>
+                            <select id="batchCategorySelect" class="w-full text-xs px-3 py-1.5 rounded-xl border border-sky-200 bg-white">
+                                <option value="PhotoBooth อัพโหลดรูป">1. PhotoBooth อัพโหลดรูป</option>
+                                <option value="PhotoBooth มุมสูง">2. PhotoBooth มุมสูง</option>
+                                <option value="สตูดิโอและกิ๊ฟช็อป">3. สตูดิโอและกิ๊ฟช็อป</option>
+                            </select>
+                        </div>
+                        <div>
+                            <label class="block text-[11px] font-semibold text-slate-600 mb-1">ราคาใหม่ (บาท)</label>
+                            <input type="number" id="batchCategoryPriceInput" placeholder="เช่น 120" class="w-full text-xs px-3 py-1.5 rounded-xl border border-sky-200 font-bold text-sky-600">
+                        </div>
+                    </div>
+                    <button onclick="updatePriceByCategoryBatch()" class="w-full py-2 bg-emerald-500 hover:bg-emerald-600 text-white font-semibold rounded-xl text-xs shadow-sm transition flex items-center justify-center gap-1.5">
+                        <i class="fa-solid fa-arrows-rotate"></i> อัปเดตราคาของหมวดหมู่นี้ทั้งหมด
+                    </button>
+                </div>
+
                 <!-- Template List Management Panel (ปรับปรุงแยกหมวดหมู่) -->
                 <div class="bg-white rounded-3xl p-5 border border-sky-100 pastel-shadow">
                     <div class="flex items-center justify-between pb-3 border-b border-sky-100 mb-3">
@@ -555,7 +580,7 @@
                             </div>
                         </div>
 
-                        <!-- Payment Info Box -->
+                        <!-- Payment Info Box (เพิ่มโลโก้ธนาคาร และ ปุ่มคัดลอกเลขบัญชี) -->
                         <div class="bg-sky-50 border border-sky-200 p-4 rounded-2xl text-xs space-y-3">
                             <div class="flex items-center justify-between border-b border-sky-200 pb-2">
                                 <span class="font-bold text-slate-700 flex items-center gap-1.5">
@@ -567,14 +592,21 @@
                                 </span>
                             </div>
 
-                            <div class="bg-white p-3 rounded-xl border border-sky-100 space-y-1.5 text-slate-700">
-                                <div class="flex justify-between items-center text-xs font-bold">
-                                    <span class="text-blue-800"><i class="fa-solid fa-money-check-dollar mr-1"></i> ธนาคารกรุงไทย (KTB)</span>
+                            <div class="bg-white p-3 rounded-xl border border-sky-100 space-y-2 text-slate-700 shadow-xs">
+                                <div class="flex items-center gap-2 font-bold text-sky-900 border-b border-slate-100 pb-1.5">
+                                    <img src="https://lh3.googleusercontent.com/d/1YZ9plz3De2zW9l9Cq2wxzNsaYx9KKbKj" alt="KTB Logo" class="w-7 h-7 object-contain rounded-full shadow-xs border border-sky-100">
+                                    <span class="text-xs">ธนาคารกรุงไทย (KTB)</span>
                                 </div>
                                 <div class="text-[11px]"><span class="text-slate-500">ชื่อบัญชี:</span> <b class="text-slate-800">ศิริโชค หลาบคำ</b></div>
-                                <div class="flex justify-between items-center">
-                                    <span class="text-[11px] text-slate-500">เลขที่บัญชี:</span>
-                                    <span class="font-mono text-sm font-bold text-sky-700 bg-sky-50 px-2 py-0.5 rounded border border-sky-200 select-all">665-2-16297-0</span>
+                                <div class="flex justify-between items-center bg-sky-50/70 p-2 rounded-xl border border-sky-100">
+                                    <div>
+                                        <div class="text-[10px] text-slate-400">เลขที่บัญชี</div>
+                                        <span id="bankAccountNumber" class="font-mono text-sm font-bold text-sky-800">665-2-16297-0</span>
+                                    </div>
+                                    <button onclick="copyBankAccountNumber()" class="px-2.5 py-1 bg-white hover:bg-sky-100 text-sky-600 border border-sky-200 rounded-lg font-semibold text-[11px] transition shadow-2xs flex items-center gap-1 active:scale-95">
+                                        <i class="fa-regular fa-copy text-sky-500"></i>
+                                        <span id="copyAccBtnText">คัดลอก</span>
+                                    </button>
                                 </div>
                             </div>
 
@@ -740,7 +772,7 @@
         let activeStaffSlotIndex = 0;
         let activeCustomerSlotIndex = 0;
         let activeCategoryFilter = 'PhotoBooth อัพโหลดรูป';
-        let activeStaffCategoryFilter = 'ALL'; // ตัวกรองหมวดหมู่สำหรับ Staff
+        let activeStaffCategoryFilter = 'ALL';
 
         let googleSheetScriptUrl = localStorage.getItem('037_gsheet_url') || DEFAULT_GSHEET_URL;
 
@@ -775,6 +807,64 @@
             initCloudSettingsListener();
             setupInteractiveCanvasControls();
         };
+
+        // ฟังก์ชันคัดลอกเลขบัญชีธนาคาร
+        function copyBankAccountNumber() {
+            const accNum = "665-2-16297-0";
+            navigator.clipboard.writeText(accNum).then(() => {
+                const btnText = document.getElementById('copyAccBtnText');
+                if (btnText) {
+                    btnText.innerText = "คัดลอกแล้ว!";
+                    setTimeout(() => {
+                        btnText.innerText = "คัดลอก";
+                    }, 2000);
+                }
+            }).catch(err => {
+                const tempInput = document.createElement("input");
+                tempInput.value = accNum;
+                document.body.appendChild(tempInput);
+                tempInput.select();
+                document.execCommand("copy");
+                document.body.removeChild(tempInput);
+                
+                const btnText = document.getElementById('copyAccBtnText');
+                if (btnText) {
+                    btnText.innerText = "คัดลอกแล้ว!";
+                    setTimeout(() => {
+                        btnText.innerText = "คัดลอก";
+                    }, 2000);
+                }
+            });
+        }
+
+        // ฟังก์ชันปรับราคาในแต่ละหมวดหมู่พร้อมกันรอบเดียว
+        function updatePriceByCategoryBatch() {
+            const selectedCategory = document.getElementById('batchCategorySelect').value;
+            const newPrice = parseFloat(document.getElementById('batchCategoryPriceInput').value);
+
+            if (isNaN(newPrice) || newPrice < 0) {
+                alert('กรุณาระบุราคาที่ถูกต้อง');
+                return;
+            }
+
+            let updatedCount = 0;
+            templates.forEach(t => {
+                if (t.category === selectedCategory) {
+                    t.price = newPrice;
+                    updatedCount++;
+                }
+            });
+
+            if (updatedCount > 0) {
+                saveTemplatesToCloud();
+                renderStaffView();
+                renderCustomerView();
+                calculatePrice();
+                alert(`ปรับราคาหมวดหมู่ "${selectedCategory}" จำนวน ${updatedCount} รายการ เป็น ฿${newPrice} เรียบร้อยแล้ว!`);
+            } else {
+                alert(`ไม่พบกรอบรูปในหมวดหมู่ "${selectedCategory}"`);
+            }
+        }
 
         function enableDownloadButton() {
             isDownloadAllowed = true;
@@ -1443,7 +1533,6 @@
             const qty = parseInt(document.getElementById('custQuantity').value) || 1;
             const currentTpl = templates[activeTemplateIndex];
             
-            // กำหนดราคาตั้งต้นของแต่ละหมวด
             let defaultPrice = 100;
             if (activeCategoryFilter === 'PhotoBooth มุมสูง') defaultPrice = 120;
             else if (activeCategoryFilter === 'สตูดิโอและกิ๊ฟช็อป') defaultPrice = 150;
@@ -1549,7 +1638,6 @@
 
             templates = [];
 
-            // หมวด 1: PhotoBooth อัพโหลดรูป (ราคา 100 บาท)
             cat1Links.forEach((link, index) => {
                 templates.push({
                     id: `cat1_${index + 1}`,
@@ -1563,7 +1651,6 @@
                 });
             });
 
-            // หมวด 2: PhotoBooth มุมสูง (กรอบรูปแบบเดียวกัน แต่ราคา 120 บาท)
             cat1Links.forEach((link, index) => {
                 templates.push({
                     id: `cat2_top_${index + 1}`,
@@ -1577,7 +1664,6 @@
                 });
             });
 
-            // หมวด 3: สตูดิโอและกิ๊ฟช็อป (ราคา 150 บาท)
             cat2Links.forEach((link, index) => {
                 templates.push({
                     id: `cat3_studio_${index + 1}`,
@@ -2116,7 +2202,6 @@
 
             renderTemplateGrid();
             
-            // เลือกเทมแพลตแรกในหมวดหมู่นี้โดยอัตโนมัติ
             const filtered = templates.filter(t => t.category === activeCategoryFilter);
             if (filtered.length > 0) {
                 activeTemplateIndex = templates.indexOf(filtered[0]);

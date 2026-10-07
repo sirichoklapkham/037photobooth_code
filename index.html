@@ -13,6 +13,10 @@
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Prompt:wght@300;400;500;600;700&display=swap" rel="stylesheet">
     
+    <!-- html2pdf.js & QRCode.js Libraries -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
+
     <script>
         tailwind.config = {
             theme: {
@@ -65,18 +69,34 @@
             animation: flashAnim 0.3s ease-out;
         }
 
+        #pdfA4Page {
+            width: 210mm;
+            min-height: 297mm;
+            padding: 10mm;
+            background: #ffffff;
+            box-sizing: border-box;
+            font-family: 'Prompt', sans-serif;
+        }
+
         @media print {
+            @page {
+                size: A4 portrait;
+                margin: 0;
+            }
+            body {
+                background: white !important;
+            }
             body * {
                 visibility: hidden;
             }
-            #printCouponsContainer, #printCouponsContainer * {
+            #pdfA4Page, #pdfA4Page * {
                 visibility: visible;
             }
-            #printCouponsContainer {
+            #pdfA4Page {
                 position: absolute;
                 left: 0;
                 top: 0;
-                width: 100%;
+                width: 210mm;
             }
         }
     </style>
@@ -157,9 +177,12 @@
                             <i class="fa-solid fa-tags text-amber-500"></i>
                             ตั้งค่าโค้ดสั่งพิมพ์รูป (Promo Codes)
                         </h2>
+                        <button onclick="addNewBlankCouponRow()" class="px-2.5 py-1 bg-emerald-500 hover:bg-emerald-600 text-white rounded-xl text-[11px] font-bold shadow-sm transition flex items-center gap-1">
+                            <i class="fa-solid fa-plus"></i> เพิ่มโค้ดใหม่
+                        </button>
                     </div>
 
-                    <div class="space-y-2 pt-2">
+                    <div class="space-y-2 pt-1">
                         <div class="flex justify-between items-center">
                             <label class="block text-[11px] font-semibold text-slate-600">จัดการโค้ดและจำนวนสิทธิ์ (Quota)</label>
                             <button onclick="resetUsedCouponsOnly()" class="px-2 py-1 bg-amber-500 hover:bg-amber-600 text-white rounded-lg text-[10px] font-bold shadow-sm transition flex items-center gap-1">
@@ -167,18 +190,31 @@
                             </button>
                         </div>
 
-                        <div class="grid grid-cols-2 gap-2 pt-1 pb-1">
-                            <button onclick="generate10RandomSingleUseCoupons()" class="py-2 bg-indigo-500 hover:bg-indigo-600 text-white rounded-xl text-xs font-bold shadow-sm transition flex items-center justify-center gap-1">
-                                <i class="fa-solid fa-dice"></i> สุ่มโค้ด 10 โค้ด (ใช้ครั้งเดียว)
-                            </button>
-                            <button onclick="printCouponsForCustomers()" class="py-2 bg-sky-600 hover:bg-sky-700 text-white rounded-xl text-xs font-bold shadow-sm transition flex items-center justify-center gap-1">
-                                <i class="fa-solid fa-print"></i> พิมพ์โค้ด (10 โค้ด)
-                            </button>
+                        <div class="bg-white p-3 rounded-2xl border border-amber-200 space-y-2">
+                            <div class="flex items-center gap-2">
+                                <label class="text-[11px] font-semibold text-slate-600 shrink-0">สุ่มสร้างโค้ด:</label>
+                                <input type="number" id="randomCouponCountInput" value="18" min="1" max="100" class="w-14 px-2 py-1 rounded-lg border border-sky-200 text-xs font-bold text-center">
+                                <span class="text-[10px] text-slate-400">โค้ด (แนะนำ 18 โค้ดพอดี A4)</span>
+                            </div>
+
+                            <div class="space-y-1 pt-1">
+                                <label class="block text-[10px] font-semibold text-slate-600"><i class="fa-solid fa-qrcode text-sky-500"></i> ลิงก์สำหรับสร้าง QR Code บนใบโค้ด:</label>
+                                <input type="text" id="couponQrUrlInput" value="https://037cafe.com" placeholder="เช่น https://037cafe.com" class="w-full text-xs px-2.5 py-1.5 rounded-xl border border-sky-200 font-mono">
+                            </div>
+
+                            <div class="grid grid-cols-2 gap-2 pt-2">
+                                <button onclick="generateRandomSingleUseCoupons()" class="py-2 bg-indigo-500 hover:bg-indigo-600 text-white rounded-xl text-xs font-bold shadow-sm transition flex items-center justify-center gap-1">
+                                    <i class="fa-solid fa-dice"></i> สุ่มโค้ดรอลูกค้า
+                                </button>
+                                <button onclick="generateAndDownloadCouponsPDF()" class="py-2 bg-rose-500 hover:bg-rose-600 text-white rounded-xl text-xs font-bold shadow-sm transition flex items-center justify-center gap-1">
+                                    <i class="fa-solid fa-file-pdf"></i> บันทึกเป็น PDF (A4)
+                                </button>
+                            </div>
                         </div>
 
-                        <div class="mt-2 space-y-1.5 max-h-56 overflow-y-auto custom-scrollbar pr-1" id="staffSingleUseCouponList"></div>
+                        <div class="mt-2 space-y-1.5 max-h-64 overflow-y-auto custom-scrollbar pr-1" id="staffSingleUseCouponList"></div>
 
-                        <button onclick="saveSingleUseCoupons()" class="w-full py-2 bg-emerald-500 hover:bg-emerald-600 text-white rounded-xl text-xs font-semibold shadow-sm transition mt-2 flex items-center justify-center gap-1">
+                        <button onclick="saveSingleUseCoupons()" class="w-full py-2.5 bg-emerald-500 hover:bg-emerald-600 text-white rounded-xl text-xs font-bold shadow-sm transition mt-2 flex items-center justify-center gap-1">
                             <i class="fa-solid fa-floppy-disk"></i> บันทึกการตั้งค่าโค้ดลง Cloud
                         </button>
                     </div>
@@ -333,13 +369,13 @@
                     <div class="flex items-center justify-between w-full mb-3 px-2">
                         <span class="text-xs font-semibold text-slate-500">
                             <i class="fa-solid fa-hand-pointer text-sky-400 mr-1"></i>
-                            ตัวอย่างตำแหน่งกรอบรูป (Staff Editor Canvas)
+                            ตัวอย่างตำแหน่งกรอบรูป (Staff Editor Canvas - คลิกลากย้าย/ขยายขนาดได้)
                         </span>
                         <span class="text-xs text-sky-600 font-mono">2400 x 3600 px</span>
                     </div>
 
-                    <div id="staffCanvasWrap" class="relative bg-slate-100 rounded-xl overflow-hidden border border-slate-200 shadow-inner select-none cursor-crosshair" style="width: 360px; height: 540px;">
-                        <div id="staffOverlayContainer" class="absolute inset-0 z-10"></div>
+                    <div id="staffCanvasWrap" class="relative bg-slate-100 rounded-xl overflow-hidden border border-slate-200 shadow-inner select-none cursor-crosshair touch-none" style="width: 360px; height: 540px;">
+                        <div id="staffOverlayContainer" class="absolute inset-0 z-10 pointer-events-auto"></div>
                         <div id="staffBgLayer" class="absolute inset-0 bg-contain bg-no-repeat bg-center pointer-events-none z-20"></div>
                     </div>
                 </div>
@@ -725,13 +761,15 @@
         </div>
     </div>
 
-    <!-- Printable coupons template container -->
-    <div id="printCouponsContainer" class="hidden p-6 bg-white">
-        <div class="text-center mb-6 pb-4 border-b">
-            <h1 class="text-2xl font-bold text-slate-800">037Cafe & Studio - โค้ดสั่งพิมพ์รูป (Photo Booth)</h1>
-            <p class="text-sm text-slate-600">ซื้อโค้ดได้ที่แคชเชียร์และนำรหัสไปกรอกก่อนสั่งพิมพ์รูป</p>
+    <!-- Container สำหรับเรนเดอร์ PDF หน้า A4 -->
+    <div style="position: absolute; left: -9999px; top: -9999px;">
+        <div id="pdfA4Page">
+            <div class="text-center mb-3 pb-2 border-b border-slate-300">
+                <h1 class="text-lg font-bold text-slate-800 uppercase tracking-wide">037Cafe & Studio - โค้ดส่วนลดสำหรับ Photo Booth</h1>
+                <p class="text-[10px] text-slate-500">โค้ดนี้สำหรับกรอกใส่เว็บไซต์อัพโหลดรูป PhotoBooth (สแกน QR Code เพื่อเข้าใช้งาน)</p>
+            </div>
+            <div id="pdfCouponsGrid" class="grid grid-cols-3 gap-2"></div>
         </div>
-        <div id="printCouponsGrid" class="grid grid-cols-2 gap-4"></div>
     </div>
 
     <!-- JavaScript Application Logic -->
@@ -766,7 +804,7 @@
             { code: 'LUCKY037', discount: 120, limit: 1, usedCount: 0 }
         ];
 
-        let activeCoupons = defaultCoupons;
+        let activeCoupons = [];
         let customerEnteredCoupons = []; 
         let verifiedCouponIndexes = {}; 
 
@@ -785,8 +823,13 @@
         let stopCaptureRequested = false;
         let isCameraMirrored = true;
 
-        // สถาณะล็อกสิทธิ์การดาวน์โหลด
         let isDownloadAllowed = false;
+
+        let isStaffDraggingSlot = false;
+        let isStaffResizingSlot = false;
+        let staffDragStartX = 0, staffDragStartY = 0;
+        let staffInitialSlotX = 0, staffInitialSlotY = 0;
+        let staffInitialSlotW = 0, staffInitialSlotH = 0;
 
         window.onload = function() {
             const urlInput = document.getElementById('googleSheetUrlInput');
@@ -837,7 +880,6 @@
                 return;
             }
 
-            // สร้าง Canvas ชั่วคราวสำหรับการดาวน์โหลดที่ไม่มีขอบและเส้นแสดงล้นกรอบ
             try {
                 const tempCanvas = document.createElement('canvas');
                 tempCanvas.width = BASE_WIDTH;
@@ -925,86 +967,168 @@
             }
         }
 
-        async function generate10RandomSingleUseCoupons() {
-            if (!confirm('คุณต้องการสุ่มสร้างโค้ดใหม่ 10 โค้ด (ใช้ได้ครั้งเดียว) ใช่หรือไม่?')) return;
+        // [แก้ไขจุดที่ 1]: บันทึกการสุ่มโค้ดลง Cloud โดยตรงทันที
+        async function generateRandomSingleUseCoupons() {
+            const countInput = parseInt(document.getElementById('randomCouponCountInput').value) || 18;
+            if (countInput <= 0) return;
+
+            if (!confirm(`คุณต้องการสุ่มสร้างโค้ดใหม่จำนวน ${countInput} โค้ด (ใช้ได้ครั้งเดียว) ใช่หรือไม่?`)) return;
 
             const chars = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789';
-            for (let i = 0; i < 10; i++) {
+            const newRandomCoupons = [];
+
+            for (let i = 0; i < countInput; i++) {
                 let randomCode = 'RND-';
                 for (let c = 0; c < 6; c++) {
                     randomCode += chars.charAt(Math.floor(Math.random() * chars.length));
                 }
                 
-                activeCoupons[i] = {
+                newRandomCoupons.push({
                     code: randomCode,
                     discount: 120,
                     limit: 1,
                     usedCount: 0
-                };
+                });
             }
 
+            activeCoupons = newRandomCoupons;
             await updateCloudSettings({ activeCoupons: activeCoupons });
             renderSingleUseCouponList();
-            alert('สุ่มสร้างโค้ดแบบใช้ได้ครั้งเดียว 10 โค้ดสำเร็จ!');
+            alert(`สุ่มสร้างโค้ดและซิงก์ไปยัง Cloud เรียบร้อยแล้วจำนวน ${countInput} โค้ด!`);
         }
 
-        function resetUsedCouponsOnly() {
+        function addNewBlankCouponRow() {
+            activeCoupons.push({
+                code: 'NEW' + Math.floor(100 + Math.random() * 900),
+                discount: 120,
+                limit: 1,
+                usedCount: 0
+            });
+            renderSingleUseCouponList();
+        }
+
+        async function deleteCouponRow(index) {
+            if (confirm('คุณต้องการลบโค้ดนี้หรือไม่?')) {
+                activeCoupons.splice(index, 1);
+                await updateCloudSettings({ activeCoupons: activeCoupons });
+                renderSingleUseCouponList();
+            }
+        }
+
+        async function resetUsedCouponsOnly() {
             if (!confirm('คุณต้องการรีเซ็ทสิทธิ์การใช้โค้ดทั้งหมดให้กลับมาใช้ได้ใหม่หรือไม่?')) return;
             activeCoupons.forEach(c => c.usedCount = 0);
-            updateCloudSettings({ activeCoupons: activeCoupons });
+            await updateCloudSettings({ activeCoupons: activeCoupons });
             renderSingleUseCouponList();
             alert('รีเซ็ทสิทธิ์โค้ดเรียบร้อยแล้ว');
         }
 
-        function saveSingleUseCoupons() {
-            for (let i = 0; i < 10; i++) {
+        async function saveSingleUseCoupons() {
+            const newCoupons = [];
+            for (let i = 0; i < activeCoupons.length; i++) {
                 const codeEl = document.getElementById(`couponCode_${i}`);
                 const discEl = document.getElementById(`couponDisc_${i}`);
                 const limitEl = document.getElementById(`couponLimit_${i}`);
 
                 if (codeEl && discEl && limitEl) {
-                    activeCoupons[i] = {
+                    newCoupons.push({
                         code: codeEl.value.trim().toUpperCase(),
                         discount: parseFloat(discEl.value) || 0,
                         limit: parseInt(limitEl.value) || 1,
                         usedCount: activeCoupons[i] ? (activeCoupons[i].usedCount || 0) : 0
-                    };
+                    });
                 }
             }
+            activeCoupons = newCoupons;
 
-            updateCloudSettings({ activeCoupons: activeCoupons });
+            await updateCloudSettings({ activeCoupons: activeCoupons });
             alert('บันทึกการตั้งค่าโค้ดลง Cloud สำเร็จ!');
             renderSingleUseCouponList();
         }
 
-        function printCouponsForCustomers() {
-            const printGrid = document.getElementById('printCouponsGrid');
-            printGrid.innerHTML = '';
+        async function generateAndDownloadCouponsPDF() {
+            const pdfGrid = document.getElementById('pdfCouponsGrid');
+            const targetUrl = document.getElementById('couponQrUrlInput').value.trim() || 'https://037cafe.com';
+            
+            if (!pdfGrid) return;
+            pdfGrid.innerHTML = '';
 
-            let hasCoupons = false;
-            for (let i = 0; i < 10; i++) {
-                const c = activeCoupons[i];
-                if (c && c.code) {
-                    hasCoupons = true;
-                    const card = document.createElement('div');
-                    card.className = "border-2 border-dashed border-sky-400 p-4 rounded-xl bg-sky-50/50 flex flex-col justify-between items-center text-center";
-                    card.innerHTML = `
-                        <div class="text-xs font-bold text-sky-600">037Cafe & Studio</div>
-                        <div class="text-[10px] text-slate-500">คูปองโค้ดสั่งพิมพ์รูป (Photo Booth)</div>
-                        <div class="text-xl font-extrabold font-mono text-slate-800 my-2 tracking-wider bg-white px-3 py-1 border rounded-lg shadow-xs">${c.code}</div>
-                        <div class="text-[10px] text-emerald-600 font-bold">สิทธิ์สั่งพิมพ์รูป: 1 ใบ (${c.limit > 1 ? `ใช้ได้ ${c.limit} ครั้ง` : 'ใช้ได้ครั้งเดียว'})</div>
-                        <div class="text-[9px] text-slate-400 mt-1">ซื้อได้ที่แคชเชียร์ - กรอกรหัสที่ตู้ก่อนพิมพ์รูป</div>
-                    `;
-                    printGrid.appendChild(card);
-                }
-            }
+            let validCoupons = activeCoupons.filter(c => c && c.code);
 
-            if (!hasCoupons) {
-                alert('ไม่พบโค้ดในระบบ กรุณาตั้งค่าโค้ดหรือกดสุ่มโค้ดก่อนทำการพิมพ์');
+            if (validCoupons.length === 0) {
+                alert('ไม่พบโค้ดในระบบ กรุณาตั้งค่าโค้ดหรือกดสุ่มโค้ดก่อนส่งออกไฟล์ PDF');
                 return;
             }
 
-            window.print();
+            const originalBtnText = event.target.innerHTML;
+            event.target.innerHTML = '<i class="fa-solid fa-spinner fa-spin mr-1"></i> กำลังสร้าง PDF...';
+            event.target.disabled = true;
+
+            validCoupons.forEach((c, index) => {
+                const card = document.createElement('div');
+                card.className = "border border-dashed border-slate-400 p-2.5 rounded-lg bg-white flex flex-col justify-between items-center text-center text-slate-800 shadow-none relative h-36";
+                
+                const qrContainerId = `qrcode_pdf_${index}`;
+                
+                card.innerHTML = `
+                    <div class="w-full flex justify-between items-center border-b border-sky-100 pb-1">
+                        <span class="text-[9px] font-extrabold text-sky-600 uppercase tracking-wider">037Cafe & Studio</span>
+                        <span class="text-[8px] bg-amber-100 text-amber-800 font-bold px-1 rounded">PhotoBooth</span>
+                    </div>
+                    
+                    <div class="my-1 flex items-center justify-between w-full px-1 gap-1">
+                        <div class="flex-1 text-left">
+                            <div class="text-[8px] text-slate-500 font-semibold">โค้ดนี้สำหรับกรอกใส่เว็บไซต์</div>
+                            <div class="text-[8px] text-slate-500 font-semibold">อัพโหลดรูป PhotoBooth</div>
+                            <div class="text-xs font-extrabold font-mono text-slate-900 bg-sky-50 px-1.5 py-0.5 border border-sky-200 rounded mt-0.5 inline-block">${c.code}</div>
+                        </div>
+                        <div id="${qrContainerId}" class="w-12 h-12 bg-white p-0.5 border border-slate-200 rounded shrink-0 flex items-center justify-center"></div>
+                    </div>
+
+                    <div class="w-full pt-1 border-t border-slate-100 text-center">
+                        <div class="text-[8px] text-emerald-600 font-bold">สิทธิ์สั่งพิมพ์: 1 ใบ (${c.limit > 1 ? `ใช้ได้ ${c.limit} ครั้ง` : 'ใช้ได้ครั้งเดียว'})</div>
+                        <div class="text-[7px] text-slate-400">สแกน QR Code แล้วกรอกโค้ดก่อนสั่งพิมพ์รูป</div>
+                    </div>
+                `;
+                
+                pdfGrid.appendChild(card);
+
+                setTimeout(() => {
+                    const qrEl = document.getElementById(qrContainerId);
+                    if (qrEl) {
+                        qrEl.innerHTML = '';
+                        new QRCode(qrEl, {
+                            text: targetUrl,
+                            width: 42,
+                            height: 42,
+                            colorDark: "#000000",
+                            colorLight: "#ffffff",
+                            correctLevel: QRCode.CorrectLevel.L
+                        });
+                    }
+                }, 50);
+            });
+
+            setTimeout(() => {
+                const element = document.getElementById('pdfA4Page');
+                const opt = {
+                    margin: 0,
+                    filename: `037Cafe_Coupons_A4_${Date.now()}.pdf`,
+                    image: { type: 'jpeg', quality: 0.98 },
+                    html2canvas: { scale: 2, useCORS: true, logging: false },
+                    jsPDF: { unit: 'mm', format: 'a4', orientation: 'portrait' }
+                };
+
+                html2pdf().set(opt).from(element).save().then(() => {
+                    event.target.innerHTML = originalBtnText;
+                    event.target.disabled = false;
+                }).catch(err => {
+                    console.error("PDF Export Error:", err);
+                    alert("เกิดข้อผิดพลาดในการสร้างไฟล์ PDF");
+                    event.target.innerHTML = originalBtnText;
+                    event.target.disabled = false;
+                });
+            }, 400);
         }
 
         function playBeepSound() {
@@ -1459,6 +1583,7 @@
             return false;
         }
 
+        // [แก้ไขจุดที่ 2]: ปรับปรุงตัวซิงก์ Cloud ไม่ให้เขียนทับข้อมูลที่มีอยู่แล้วด้วยค่า Default
         function initCloudSettingsListener() {
             if (!window.settingsDocRef || !window.templatesDocRef) {
                 setTimeout(initCloudSettingsListener, 300);
@@ -1468,14 +1593,15 @@
             window.onSnapshot(window.settingsDocRef, (docSnap) => {
                 if (docSnap.exists()) {
                     const data = docSnap.data();
-                    if (data.activeCoupons !== undefined && Array.isArray(data.activeCoupons)) {
+                    if (data.activeCoupons && Array.isArray(data.activeCoupons)) {
                         activeCoupons = data.activeCoupons;
                     }
-                    if (currentMode === 'staff') renderSingleUseCouponList();
-                    calculatePrice();
                 } else {
-                    window.setDoc(window.settingsDocRef, { activeCoupons: activeCoupons }, { merge: true });
+                    activeCoupons = defaultCoupons;
+                    window.setDoc(window.settingsDocRef, { activeCoupons: defaultCoupons }, { merge: true });
                 }
+                if (currentMode === 'staff') renderSingleUseCouponList();
+                calculatePrice();
             }, (err) => { console.error("Firebase Coupon Sync Error:", err); });
 
             window.onSnapshot(window.templatesDocRef, async (docSnap) => {
@@ -1509,10 +1635,11 @@
             }
         }
 
+        // [แก้ไขจุดที่ 3]: บันทึกข้อมูล Templates ลงทั้ง Firebase และ Backup ไปยัง Google Sheets
         async function saveTemplatesToCloud() {
             if (window.templatesDocRef) {
                 try {
-                    await window.setDoc(window.templatesDocRef, { templates: templates });
+                    await window.setDoc(window.templatesDocRef, { templates: templates }, { merge: true });
                     if (googleSheetScriptUrl) {
                         fetch(googleSheetScriptUrl, {
                             method: 'POST',
@@ -1520,7 +1647,7 @@
                             body: JSON.stringify({ action: 'saveTemplates', templates: templates })
                         }).catch(e => console.error("Backup to GSheet error:", e));
                     }
-                    alert('บันทึกข้อมูลเทมแพลตทั้งหมดลง Cloud และ Google Sheet เรียบร้อยแล้ว!');
+                    alert('บันทึกข้อมูลเทมแพลตทั้งหมดลง Cloud เรียบร้อยแล้ว! เครื่องอื่นจะเห็นแบบกรอบตรงกัน');
                 } catch (err) {
                     console.error("Error saving templates to Cloud:", err);
                     alert('เกิดข้อผิดพลาดในการบันทึกข้อมูลลง Cloud');
@@ -1926,13 +2053,29 @@
 
             if (detectedBoxes.length > 0) {
                 detectedBoxes.sort((a, b) => (a.minY - b.minY) || (a.minX - b.minX));
-                currentTpl.slots = detectedBoxes.map(b => ({
-                    x: Math.round(b.minX * scaleX),
-                    y: Math.round(b.minY * scaleY),
-                    w: Math.round(b.boxWidth * scaleX),
-                    h: Math.round(b.boxHeight * scaleY),
-                    radius: 20, rotation: 0
-                }));
+                
+                const paddingPX = 20;
+
+                currentTpl.slots = detectedBoxes.map(b => {
+                    let rawX = Math.round(b.minX * scaleX);
+                    let rawY = Math.round(b.minY * scaleY);
+                    let rawW = Math.round(b.boxWidth * scaleX);
+                    let rawH = Math.round(b.boxHeight * scaleY);
+
+                    let finalX = Math.max(0, rawX - paddingPX);
+                    let finalY = Math.max(0, rawY - paddingPX);
+                    let finalW = Math.min(BASE_WIDTH - finalX, rawW + (paddingPX * 2));
+                    let finalH = Math.min(BASE_HEIGHT - finalY, rawH + (paddingPX * 2));
+
+                    return {
+                        x: finalX,
+                        y: finalY,
+                        w: finalW,
+                        h: finalH,
+                        radius: 20,
+                        rotation: 0
+                    };
+                });
 
                 if (tplIndex === activeTemplateIndex) {
                     activeStaffSlotIndex = 0;
@@ -1987,8 +2130,7 @@
             if (!container) return;
             container.innerHTML = '';
 
-            for (let i = 0; i < 10; i++) {
-                const itemData = activeCoupons[i] || { code: '', discount: 0, limit: 1, usedCount: 0 };
+            activeCoupons.forEach((itemData, i) => {
                 const used = itemData.usedCount || 0, limit = itemData.limit || 1;
                 const isFullyUsed = used >= limit && limit > 0;
 
@@ -2002,15 +2144,18 @@
                     <input type="text" id="couponCode_${i}" value="${itemData.code || ''}" placeholder="โค้ด" class="col-span-4 text-xs px-2 py-1 rounded-lg border border-sky-200 uppercase font-mono font-bold text-slate-800">
                     <input type="number" id="couponDisc_${i}" value="${itemData.discount || ''}" placeholder="ส่วนลด(฿)" class="col-span-2 text-xs px-2 py-1 rounded-lg border border-sky-200 text-slate-800 font-semibold">
                     <input type="number" id="couponLimit_${i}" value="${limit}" min="1" placeholder="สิทธิ์" class="col-span-2 text-xs px-2 py-1 rounded-lg border border-sky-200 text-slate-800 font-semibold text-center" title="จำนวนสิทธิ์ทั้งหมด">
-                    <div class="col-span-3 text-right">
+                    <div class="col-span-2 text-right">
                         ${isFullyUsed 
-                            ? `<span class="text-[10px] font-bold text-rose-600 bg-rose-100 px-1.5 py-0.5 rounded-md inline-flex items-center gap-1"><i class="fa-solid fa-circle-xmark"></i> หมด (${used}/${limit})</span>`
-                            : `<span class="text-[10px] font-bold text-emerald-600 bg-emerald-50 px-1.5 py-0.5 rounded-md inline-flex items-center gap-1"><i class="fa-solid fa-circle-check"></i> พร้อมใช้ (${used}/${limit})</span>`
+                            ? `<span class="text-[9px] font-bold text-rose-600 bg-rose-100 px-1 py-0.5 rounded inline-block">หมด</span>`
+                            : `<span class="text-[9px] font-bold text-emerald-600 bg-emerald-50 px-1 py-0.5 rounded inline-block">พร้อมใช้</span>`
                         }
                     </div>
+                    <button onclick="deleteCouponRow(${i})" class="col-span-1 text-rose-400 hover:text-rose-600 text-center transition" title="ลบโค้ดนี้">
+                        <i class="fa-solid fa-trash-can text-xs"></i>
+                    </button>
                 `;
                 container.appendChild(row);
-            }
+            });
         }
 
         function renderStaffView() {
@@ -2233,9 +2378,10 @@
             const scale = 360 / BASE_WIDTH; 
 
             currentTpl.slots.forEach((s, idx) => {
+                const isSelected = (idx === activeStaffSlotIndex);
                 const box = document.createElement('div');
-                box.className = `absolute border-2 flex items-center justify-center font-bold text-xs shadow-md transition ${
-                    idx === activeStaffSlotIndex ? 'border-rose-500 bg-rose-500/20 text-rose-700 ring-2 ring-rose-300' : 'border-sky-500 bg-sky-500/10 text-sky-700'
+                box.className = `absolute border-2 flex items-center justify-center font-bold text-xs shadow-md cursor-move select-none ${
+                    isSelected ? 'border-rose-500 bg-rose-500/20 text-rose-700 ring-2 ring-rose-300 z-20' : 'border-sky-500 bg-sky-500/10 text-sky-700 z-10'
                 }`;
                 box.style.left = `${s.x * scale}px`;
                 box.style.top = `${s.y * scale}px`;
@@ -2243,14 +2389,50 @@
                 box.style.height = `${s.h * scale}px`;
                 box.style.borderRadius = `${(s.radius || 0) * scale}px`;
                 box.style.transform = `rotate(${s.rotation || 0}deg)`;
-                box.innerText = `#${idx + 1}`;
+                
+                box.innerHTML = `<span>#${idx + 1}</span>`;
 
-                box.onclick = (e) => {
+                if (isSelected) {
+                    const resizeHandle = document.createElement('div');
+                    resizeHandle.className = 'absolute bottom-0 right-0 w-4 h-4 bg-rose-600 rounded-tl cursor-se-resize flex items-center justify-center text-[8px] text-white shadow';
+                    resizeHandle.innerHTML = '<i class="fa-solid fa-up-right-and-down-left-from-center rotate-90"></i>';
+                    
+                    const handleStart = (clientX, clientY, e) => {
+                        e.stopPropagation();
+                        isStaffResizingSlot = true;
+                        isStaffDraggingSlot = false;
+                        activeStaffSlotIndex = idx;
+                        staffDragStartX = clientX;
+                        staffDragStartY = clientY;
+                        staffInitialSlotW = s.w;
+                        staffInitialSlotH = s.h;
+                    };
+
+                    resizeHandle.addEventListener('mousedown', (e) => handleStart(e.clientX, e.clientY, e));
+                    resizeHandle.addEventListener('touchstart', (e) => {
+                        if (e.touches.length === 1) handleStart(e.touches[0].clientX, e.touches[0].clientY, e);
+                    }, { passive: false });
+
+                    box.appendChild(resizeHandle);
+                }
+
+                const dragStart = (clientX, clientY, e) => {
                     e.stopPropagation();
+                    isStaffDraggingSlot = true;
+                    isStaffResizingSlot = false;
                     activeStaffSlotIndex = idx;
+                    staffDragStartX = clientX;
+                    staffDragStartY = clientY;
+                    staffInitialSlotX = s.x;
+                    staffInitialSlotY = s.y;
                     renderStaffSlotControls();
                     drawStaffCanvasOverlay();
                 };
+
+                box.addEventListener('mousedown', (e) => dragStart(e.clientX, e.clientY, e));
+                box.addEventListener('touchstart', (e) => {
+                    if (e.touches.length === 1) dragStart(e.touches[0].clientX, e.touches[0].clientY, e);
+                }, { passive: false });
 
                 overlayContainer.appendChild(box);
             });
@@ -2334,7 +2516,7 @@
         }
 
         function updateCustomerPhotoTransformFromInputs() {
-            if (currentStep !== 3) return; // ทำงานเฉพาะขั้นตอนที่ 3 เท่านั้น
+            if (currentStep !== 3) return;
 
             if (!customerSlotData[activeCustomerSlotIndex]) {
                 customerSlotData[activeCustomerSlotIndex] = { img: null, xOffset: 0, yOffset: 0, scale: 1, rotation: 0 };
@@ -2348,7 +2530,7 @@
         }
 
         function resetActiveCustomerPhotoTransform() {
-            if (currentStep !== 3) return; // ทำงานเฉพาะขั้นตอนที่ 3 เท่านั้น
+            if (currentStep !== 3) return;
 
             if (customerSlotData[activeCustomerSlotIndex]) {
                 customerSlotData[activeCustomerSlotIndex].xOffset = 0;
@@ -2360,7 +2542,6 @@
             }
         }
 
-        // ฟังก์ชันวาดรูปภาพสำหรับแสดงผลหลักของลูกค้า
         function drawCustomerMainCanvas() {
             const canvas = document.getElementById('mainRenderCanvas');
             if (!canvas) return;
@@ -2372,7 +2553,6 @@
             ctx.fillStyle = (currentTpl && currentTpl.bgColor) ? currentTpl.bgColor : '#FFFFFF';
             ctx.fillRect(0, 0, BASE_WIDTH, BASE_HEIGHT);
 
-            // 1. วาดรูปภาพลงใน Slot ต่างๆ
             if (currentTpl && currentTpl.slots) {
                 currentTpl.slots.forEach((s, idx) => {
                     const data = customerSlotData[idx];
@@ -2434,18 +2614,15 @@
                 });
             }
 
-            // 2. วาดภาพกรอบทับด้านบน (ถ้ามี)
             if (currentTpl && currentTpl.id && loadedBgImages[currentTpl.id]) {
                 ctx.drawImage(loadedBgImages[currentTpl.id], 0, 0, BASE_WIDTH, BASE_HEIGHT);
             }
 
-            // 3. แสดงขอบรูปภาพที่ล้นกรอบออกมารวมถึง Highlight สีเขียวของ Slot เฉพาะขั้นตอนที่ 3 เท่านั้น
             if (currentStep === 3 && currentTpl && currentTpl.slots) {
                 currentTpl.slots.forEach((s, idx) => {
                     const data = customerSlotData[idx];
                     const isSelectedSlot = (idx === activeCustomerSlotIndex);
 
-                    // --- วาดขอบเส้นประสีแดงเตือนขอบเขตรูปที่ล้นออกมาจาก Slot ---
                     if (data && data.img) {
                         ctx.save();
                         ctx.translate(s.x + s.w / 2, s.y + s.h / 2);
@@ -2453,7 +2630,6 @@
 
                         const w = s.w, h = s.h, r = s.radius || 0;
 
-                        // วาดพื้นที่เต็มของรูปภาพต้นฉบับหลังหมุน ย้าย ซูม
                         ctx.save();
                         ctx.translate(data.xOffset || 0, data.yOffset || 0);
                         ctx.rotate((data.rotation || 0) * Math.PI / 180);
@@ -2464,12 +2640,10 @@
                         let drawW = (imgAspect > slotAspect) ? h * imgAspect : w;
                         let drawH = (imgAspect > slotAspect) ? h : w / imgAspect;
 
-                        // สร้าง Path ขอบรูป
                         ctx.beginPath();
                         ctx.rect(-drawW / 2, -drawH / 2, drawW, drawH);
                         ctx.restore();
 
-                        // เจาะช่อง Slot ออก (Invert Clip Path) เพื่อไฮไลต์เฉพาะส่วนที่ยื่นล้นออกมา
                         ctx.beginPath();
                         if (r > 0) {
                             ctx.moveTo(-w / 2 + r, -h / 2);
@@ -2482,7 +2656,6 @@
                             ctx.rect(-w / 2, -h / 2, w, h);
                         }
 
-                        // ถ้ารูปมีส่วนล้นออกมา วาดเฉพาะเส้นประสีแดงเตือนขอบรูป
                         ctx.save();
                         ctx.strokeStyle = '#EF4444';
                         ctx.lineWidth = 6;
@@ -2500,7 +2673,6 @@
                         ctx.restore();
                     }
 
-                    // --- วาดกรอบสีเขียวสำหรับ Slot ที่ถูกเลือกอยู่ (Green Selection Frame) ---
                     if (isSelectedSlot) {
                         ctx.save();
                         ctx.translate(s.x + s.w / 2, s.y + s.h / 2);
@@ -2520,7 +2692,6 @@
                             ctx.rect(-w / 2, -h / 2, w, h);
                         }
 
-                        // เส้นขอบสีเขียวเน้น Slot ที่ถูกเลือก
                         ctx.strokeStyle = '#16A34A';
                         ctx.lineWidth = 14;
                         ctx.setLineDash([]);
@@ -2528,7 +2699,6 @@
                         ctx.shadowBlur = 20;
                         ctx.stroke();
 
-                        // ป้ายแสดงชื่อ Slot สีเขียว
                         ctx.fillStyle = '#16A34A';
                         ctx.shadowBlur = 0;
                         const labelWidth = 240;
@@ -2549,6 +2719,51 @@
 
         function setupInteractiveCanvasControls() {
             const container = document.getElementById('customerCanvasContainer');
+            const staffWrap = document.getElementById('staffCanvasWrap');
+
+            const handleStaffPointerMove = (clientX, clientY) => {
+                if (!isStaffDraggingSlot && !isStaffResizingSlot) return;
+
+                const currentTpl = templates[activeTemplateIndex];
+                if (!currentTpl || !currentTpl.slots[activeStaffSlotIndex]) return;
+
+                const slot = currentTpl.slots[activeStaffSlotIndex];
+                const rect = staffWrap.getBoundingClientRect();
+                const scale = BASE_WIDTH / rect.width;
+
+                const dx = (clientX - staffDragStartX) * scale;
+                const dy = (clientY - staffDragStartY) * scale;
+
+                if (isStaffDraggingSlot) {
+                    slot.x = Math.max(0, Math.min(BASE_WIDTH - slot.w, Math.round(staffInitialSlotX + dx)));
+                    slot.y = Math.max(0, Math.min(BASE_HEIGHT - slot.h, Math.round(staffInitialSlotY + dy)));
+                } else if (isStaffResizingSlot) {
+                    slot.w = Math.max(100, Math.min(BASE_WIDTH - slot.x, Math.round(staffInitialSlotW + dx)));
+                    slot.h = Math.max(100, Math.min(BASE_HEIGHT - slot.y, Math.round(staffInitialSlotH + dy)));
+                }
+
+                renderStaffSlotControls();
+                drawStaffCanvasOverlay();
+                drawCustomerMainCanvas();
+            };
+
+            const handleStaffPointerUp = () => {
+                isStaffDraggingSlot = false;
+                isStaffResizingSlot = false;
+            };
+
+            window.addEventListener('mousemove', (e) => handleStaffPointerMove(e.clientX, e.clientY));
+            window.addEventListener('mouseup', handleStaffPointerUp);
+
+            window.addEventListener('touchmove', (e) => {
+                if ((isStaffDraggingSlot || isStaffResizingSlot) && e.touches.length === 1) {
+                    e.preventDefault();
+                    handleStaffPointerMove(e.touches[0].clientX, e.touches[0].clientY);
+                }
+            }, { passive: false });
+
+            window.addEventListener('touchend', handleStaffPointerUp);
+
             if (!container) return;
 
             const getTouchDistanceAndAngle = (e) => {
@@ -2562,7 +2777,6 @@
                 };
             };
 
-            // ตรวจสอบว่าพิกัดที่กดตรงกับ Slot ไหนใน Canvas
             const checkAndSelectSlotByCoordinates = (clientX, clientY) => {
                 const currentTpl = templates[activeTemplateIndex];
                 if (!currentTpl || !currentTpl.slots) return;
@@ -2574,7 +2788,6 @@
                 const canvasX = (clientX - rect.left) * scaleX;
                 const canvasY = (clientY - rect.top) * scaleY;
 
-                // ตรวจสอบว่าจุดแตะสัมผัสอยู่ใน Slot ไหน
                 for (let i = 0; i < currentTpl.slots.length; i++) {
                     const s = currentTpl.slots[i];
                     if (canvasX >= s.x && canvasX <= s.x + s.w && canvasY >= s.y && canvasY <= s.y + s.h) {
@@ -2588,7 +2801,6 @@
             };
 
             const startPan = (clientX, clientY) => {
-                // อนุญาตให้เลือก/ยืดหดลากรูปภาพเฉพาะขั้นตอนที่ 3 เท่านั้น
                 if (currentStep !== 3) return;
 
                 checkAndSelectSlotByCoordinates(clientX, clientY);
@@ -2631,7 +2843,7 @@
             window.addEventListener('mouseup', endPan);
 
             container.addEventListener('touchstart', (e) => {
-                if (currentStep !== 3) return; // ทำงานเฉพาะขั้นตอนที่ 3 เท่านั้น
+                if (currentStep !== 3) return;
 
                 if (e.touches.length === 1) {
                     startPan(e.touches[0].clientX, e.touches[0].clientY);
@@ -2650,7 +2862,7 @@
             }, { passive: false });
 
             container.addEventListener('touchmove', (e) => {
-                if (currentStep !== 3) return; // ทำงานเฉพาะขั้นตอนที่ 3 เท่านั้น
+                if (currentStep !== 3) return;
 
                 if (e.touches.length === 1 && isPanningCustomerPhoto) {
                     e.preventDefault();
@@ -2734,7 +2946,6 @@
             }, 600);
 
             if (googleSheetScriptUrl) {
-                // สร้างภาพสำหรับส่งออกไปยัง Google Sheet / Drive โดยปราศจากขอบสีเขียวและเส้นประ
                 const tempCanvas = document.createElement('canvas');
                 tempCanvas.width = BASE_WIDTH;
                 tempCanvas.height = BASE_HEIGHT;

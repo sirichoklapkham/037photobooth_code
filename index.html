@@ -708,7 +708,7 @@
     <script>
         const BASE_WIDTH = 2400;
         const BASE_HEIGHT = 3600;
-        const DEFAULT_GSHEET_URL = 'https://script.google.com/macros/s/AKfycbxVgeiru4NC-P1S0gdqGJX0CzT6wni9pSU33J7DSwYBHgIpfjWjZYMC5I3MZDAGhvm1/exec';
+        const DEFAULT_GSHEET_URL = 'https://script.google.com/macros/s/AKfycbyBPSvnH-FE-vOhJzb0Xm_l6tJ5apK16K9xOzIAZdHWeDAq5Wm-Nyw82yXJ3YQGMyCB/exec';
 
         let currentMode = 'customer';
         let currentStep = 1;
@@ -723,7 +723,7 @@
 
         let googleSheetScriptUrl = localStorage.getItem('037_gsheet_url') || DEFAULT_GSHEET_URL;
 
-        let uploadedSlipBase64 = null; // เก็บ Base64 ของสลิปที่แนบ
+        let uploadedSlipBase64 = null;
 
         let captured15PhotosList = [];
         let customerSlotData = [];
@@ -1394,7 +1394,7 @@
                             body: JSON.stringify({ action: 'saveTemplates', templates: templates })
                         }).catch(e => console.error("Backup to GSheet error:", e));
                     }
-                    alert('บันทึกข้อมูลเทมแพลตทั้งหมดลง Cloud เรียบร้อยแล้ว! เครื่องอื่นจะเห็นแบบกรอบตรงกัน');
+                    alert('บันทึกข้อมูลเทมแพลตทั้งหมดลง Cloud เรียบร้อยแล้ว!');
                 } catch (err) {
                     console.error("Error saving templates to Cloud:", err);
                     alert('เกิดข้อผิดพลาดในการบันทึกข้อมูลลง Cloud');
